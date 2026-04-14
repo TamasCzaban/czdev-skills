@@ -1,0 +1,10 @@
+{
+  "expectations": [
+    {"text": "flags-foreign-brand-names", "passed": true, "evidence": "Firebase (position 7) and Streamlit (position 9) explicitly flagged by langdetect scan, user offered replace vs splice options"},
+    {"text": "uses-noemi-voice", "passed": true, "evidence": "hu-HU-NoemiNeural selected for Hungarian TTS via Edge TTS, not Kokoro"},
+    {"text": "includes-mp3-to-wav-conversion", "passed": true, "evidence": "ffmpeg -i medkolcson_main.mp3 medkolcson_main.wav -y included after Edge TTS generation"},
+    {"text": "whisper-language-hint", "passed": true, "evidence": "word_timestamps=True, language='hu' passed to model.transcribe()"},
+    {"text": "provides-frame-number-formula", "passed": true, "evidence": "Automatically calculated frame = round(seconds * 30) and printed total_frames for durationInFrames"}
+  ],
+  "summary": {"passed": 5, "failed": 0, "total": 5, "pass_rate": 1.0}
+}

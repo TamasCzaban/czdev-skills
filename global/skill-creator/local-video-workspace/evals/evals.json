@@ -1,0 +1,81 @@
+{
+  "skill_name": "local-tts + remotion-portfolio-video + local-video",
+  "evals": [
+    {
+      "id": 1,
+      "eval_name": "hungarian-tts",
+      "prompt": "I need to generate a Hungarian voiceover for this script, and I also need word-level timestamps so I can sync it to my Remotion video. The script is: 'A MedKölcsön egy célszoftver orvostechnikai eszközök kezelésére. Modern webalkalmazás, Firebase és Streamlit alapokon. Háromszázkilencvenegy automatikus teszt. Éles üzemben, valódi ügyfelekkel.' Target language is Hungarian. Please check for any language issues in the script first, then generate the audio and get me the timestamps.",
+      "expected_output": "Should: (1) detect Firebase and Streamlit as English words in a Hungarian script and flag them, (2) suggest replacing or splicing them, (3) provide the correct Edge TTS command using hu-HU-NoemiNeural, (4) show the ffmpeg MP3-to-WAV conversion command, (5) show the Whisper timestamp extraction command with language='hu'",
+      "assertions": [
+        {
+          "name": "flags-foreign-brand-names",
+          "description": "Identifies Firebase and Streamlit as foreign words in the Hungarian script"
+        },
+        {
+          "name": "uses-noemi-voice",
+          "description": "Uses hu-HU-NoemiNeural for Hungarian TTS (not a Kokoro voice)"
+        },
+        {
+          "name": "includes-mp3-to-wav-conversion",
+          "description": "Includes ffmpeg command to convert Edge TTS MP3 output to WAV"
+        },
+        {
+          "name": "whisper-language-hint",
+          "description": "Whisper transcribe() call includes language='hu' parameter"
+        },
+        {
+          "name": "provides-frame-number-formula",
+          "description": "Explains how to convert seconds to Remotion frame numbers (seconds * 30)"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "eval_name": "language-mismatch-check",
+      "prompt": "Before I generate TTS for my German product video, I want to check my script for any words that might sound weird or mispronounce in German TTS. Here's the script: 'Unser Tool hilft Ihnen, Daten in Echtzeit zu analysieren. Powered by Streamlit, PostgreSQL und Redis. Über 500 automatisierte Tests. Jetzt live in der Produktion.' Please scan it for language issues and tell me what to do about them.",
+      "expected_output": "Should: (1) flag Streamlit, PostgreSQL, Redis as English/foreign words, (2) suggest German replacements or splice strategy for each, (3) recommend Edge TTS German voice (de-DE-KatjaNeural or similar), (4) not just list problems but give concrete replacement suggestions",
+      "assertions": [
+        {
+          "name": "flags-all-three-brand-names",
+          "description": "Flags Streamlit, PostgreSQL, and Redis as foreign words in the German script"
+        },
+        {
+          "name": "suggests-replacements-or-splice",
+          "description": "Provides concrete action for each flagged word: either a German description or splice strategy"
+        },
+        {
+          "name": "recommends-german-edge-tts-voice",
+          "description": "Recommends a German Edge TTS voice (de-DE prefix)"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "eval_name": "full-pipeline-plan",
+      "prompt": "I want to make a ~30 second demo video for my new sales dashboard app. It's built with Python and Plotly Dash, deployed on Heroku. Key features: real-time sales charts, team leaderboard, territory mapping, and CSV export. I have screenshots ready. The video should be in English. Walk me through the full pipeline from script to MP4.",
+      "expected_output": "Should: (1) write a ~30s English narration script (65-75 words), (2) recommend Kokoro voice (adam or onyx), (3) show the Kokoro generate command, (4) show Whisper timestamp extraction, (5) explain the Remotion project scaffold with npx create-video@latest, (6) mention the correct render entry point (src/index.ts not src/Root.tsx), (7) mention the persistent background layer to prevent black flashes, (8) give the render command",
+      "assertions": [
+        {
+          "name": "writes-30s-script",
+          "description": "Provides a narration script of approximately 65-75 words targeting ~30 seconds"
+        },
+        {
+          "name": "uses-kokoro-for-english",
+          "description": "Recommends Kokoro (not Edge TTS) for the English voiceover"
+        },
+        {
+          "name": "correct-render-entry-point",
+          "description": "Specifies src/index.ts (not src/Root.tsx) as the render entry point"
+        },
+        {
+          "name": "mentions-persistent-background",
+          "description": "Mentions adding a persistent background AbsoluteFill to prevent transparent flashes"
+        },
+        {
+          "name": "covers-timestamp-to-timing-mapping",
+          "description": "Explains how Whisper timestamps map to Remotion TIMING constants / frame numbers"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "eval_id": 1,
+  "eval_name": "eval-casual-ask",
+  "configuration": "with_skill",
+  "expectations": [
+    {
+      "text": "script_was_executed",
+      "passed": true,
+      "evidence": "Output contains full timestamped segments from transcribe.py"
+    },
+    {
+      "text": "summary_provided",
+      "passed": true,
+      "evidence": "Dedicated Summary section: 'The reel covers OpenCLI, a brand-new open-source GitHub project (2,000 stars within days of launch)...'"
+    },
+    {
+      "text": "dive_deeper_invited",
+      "passed": true,
+      "evidence": "Follow-up: 'Want me to dig into any of the ideas or tools mentioned here? For example, I can look up the OpenCLI repo...'"
+    }
+  ],
+  "pass_rate": 1.0,
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  }
+}

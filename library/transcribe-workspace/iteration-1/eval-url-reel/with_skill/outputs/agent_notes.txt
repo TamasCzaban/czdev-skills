@@ -1,0 +1,16 @@
+AGENT NOTES — eval-url-reel / with_skill
+========================================
+
+Did the skill trigger correctly?
+YES. The SKILL.md was read first as instructed by the task. The skill description matches the trigger condition (user pasted an Instagram Reel URL and asked for a transcription). The skill would have auto-triggered in a normal conversation via the Skill tool.
+
+Did the script run?
+YES. The script at C:\Users\Toma\projects\reel-transcriber\transcribe.py ran successfully. ffmpeg PATH was set as specified in SKILL.md before invoking the script. The audio was downloaded from the Instagram Reel, the Whisper large-v3 model loaded on CUDA (GPU), language was detected as English at 100% confidence, and the full timestamped transcript was produced and saved to C:\Users\Toma\projects\reel-transcriber\transcript.txt.
+
+Did you offer follow-up discussion?
+YES. Per SKILL.md instructions, a summary (1-2 sentences of context) was provided along with a follow-up prompt asking if the user wants to dig into any tools or ideas mentioned — specifically OpenCLI, browser automation comparisons, or practical project applications.
+
+Notes:
+- No login/cookie fallback was needed; the reel was publicly accessible.
+- Clip length: ~76 seconds. Transcription was clean with no apparent errors.
+- The narrator says "Cloud Code" throughout — this refers to Claude Code (the AI coding CLI), not a generic cloud service.

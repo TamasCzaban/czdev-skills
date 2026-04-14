@@ -1,0 +1,19 @@
+{
+  "eval_id": 2,
+  "eval_name": "language-mismatch-check",
+  "prompt": "Before I generate TTS for my German product video, I want to check my script for any words that might sound weird or mispronounce in German TTS. Here's the script: 'Unser Tool hilft Ihnen, Daten in Echtzeit zu analysieren. Powered by Streamlit, PostgreSQL und Redis. Über 500 automatisierte Tests. Jetzt live in der Produktion.' Please scan it for language issues and tell me what to do about them.",
+  "assertions": [
+    {
+      "name": "flags-all-three-brand-names",
+      "description": "Flags Streamlit, PostgreSQL, and Redis as foreign/English words in the German script"
+    },
+    {
+      "name": "suggests-replacements-or-splice",
+      "description": "Provides concrete action for each flagged word: either a German description replacement or splice strategy — not just listing the problem"
+    },
+    {
+      "name": "recommends-german-edge-tts-voice",
+      "description": "Recommends a German Edge TTS voice (de-DE- prefix, e.g. de-DE-KatjaNeural)"
+    }
+  ]
+}

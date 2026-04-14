@@ -1,0 +1,8 @@
+{
+  "expectations": [
+    {"text": "flags-all-three-brand-names", "passed": true, "evidence": "Flagged Streamlit, PostgreSQL, Redis — plus 'live' and 'Powered by'. Good general linguistic awareness"},
+    {"text": "suggests-replacements-or-splice", "passed": true, "evidence": "Suggested German rewrites and phoneme SSML overrides per brand name. Concrete enough"},
+    {"text": "recommends-german-edge-tts-voice", "passed": false, "evidence": "No specific TTS voice or engine named — focused on SSML phoneme overrides and on-screen text, never recommended a de-DE Edge TTS voice"}
+  ],
+  "summary": {"passed": 2, "failed": 1, "total": 3, "pass_rate": 0.667}
+}

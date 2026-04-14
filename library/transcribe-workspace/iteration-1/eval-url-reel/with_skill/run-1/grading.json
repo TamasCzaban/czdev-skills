@@ -1,0 +1,29 @@
+{
+  "eval_id": 0,
+  "eval_name": "eval-url-reel",
+  "configuration": "with_skill",
+  "expectations": [
+    {
+      "text": "script_was_executed",
+      "passed": true,
+      "evidence": "Output contains timestamped segments ([0.0s -> 2.2s], etc.) which are only produced by running transcribe.py"
+    },
+    {
+      "text": "transcript_contains_keywords",
+      "passed": true,
+      "evidence": "Output contains 'OpenCLI', 'CLI', 'browser automation', and 'Cloud Code' (Claude Code, as spoken by presenter)"
+    },
+    {
+      "text": "follow_up_discussion_offered",
+      "passed": true,
+      "evidence": "Ends with: 'Want me to dig into any of the ideas or tools mentioned here \u00e2\u20ac\u201d like how OpenCLI works, how it compares to Playwright...'"
+    }
+  ],
+  "pass_rate": 1.0,
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  }
+}

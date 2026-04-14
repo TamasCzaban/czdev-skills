@@ -1,0 +1,19 @@
+{
+  "eval_id": 2,
+  "eval_name": "eval-discuss",
+  "prompt": "what does this video say https://www.instagram.com/reels/DWIjdfEtNbl/ i want to know more about the tool mentioned",
+  "assertions": [
+    {
+      "name": "script_was_executed",
+      "description": "The agent actually ran the transcribe.py script via Bash"
+    },
+    {
+      "name": "tool_identified",
+      "description": "The agent specifically identified 'OpenCLI' as the tool mentioned in the video"
+    },
+    {
+      "name": "research_or_discussion_offered",
+      "description": "The agent offered to research or discuss OpenCLI further, responding to the user's stated interest"
+    }
+  ]
+}

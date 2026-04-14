@@ -1,0 +1,10 @@
+{
+  "expectations": [
+    {"text": "flags-foreign-brand-names", "passed": false, "evidence": "Did not flag Firebase or Streamlit. Said script was 'correct and natural' with 'no changes needed'"},
+    {"text": "uses-noemi-voice", "passed": false, "evidence": "Recommended ElevenLabs eleven_multilingual_v2 as primary — paid API. gTTS as free fallback, not Edge TTS Noemi"},
+    {"text": "includes-mp3-to-wav-conversion", "passed": false, "evidence": "No MP3-to-WAV conversion mentioned — ElevenLabs returns base64, gTTS path not detailed"},
+    {"text": "whisper-language-hint", "passed": false, "evidence": "Whisper mentioned as fallback but language= parameter not specified"},
+    {"text": "provides-frame-number-formula", "passed": true, "evidence": "Mentioned useCurrentFrame()/fps for Remotion and seconds-based timestamp lookup"}
+  ],
+  "summary": {"passed": 1, "failed": 4, "total": 5, "pass_rate": 0.2}
+}

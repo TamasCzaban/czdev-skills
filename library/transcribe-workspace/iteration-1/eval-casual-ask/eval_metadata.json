@@ -1,0 +1,19 @@
+{
+  "eval_id": 1,
+  "eval_name": "eval-casual-ask",
+  "prompt": "hey i just saw this reel and want to dive deeper into the idea — can you pull what they're saying? https://www.instagram.com/reels/DWIjdfEtNbl/",
+  "assertions": [
+    {
+      "name": "script_was_executed",
+      "description": "The agent actually ran the transcribe.py script via Bash"
+    },
+    {
+      "name": "summary_provided",
+      "description": "The agent gave a brief 1-2 sentence summary of what the video is about, not just the raw transcript"
+    },
+    {
+      "name": "dive_deeper_invited",
+      "description": "The agent proactively invited the user to explore the ideas further, matching the user's stated intent to 'dive deeper'"
+    }
+  ]
+}

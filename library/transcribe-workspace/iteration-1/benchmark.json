@@ -1,0 +1,263 @@
+{
+  "metadata": {
+    "skill_name": "transcribe",
+    "skill_path": "<path/to/skill>",
+    "executor_model": "<model-name>",
+    "analyzer_model": "<model-name>",
+    "timestamp": "2026-03-24T18:47:58Z",
+    "evals_run": [
+      0,
+      1,
+      2
+    ],
+    "runs_per_configuration": 3
+  },
+  "runs": [
+    {
+      "eval_id": 1,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 79.2,
+        "tokens": 16602,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "script_was_executed",
+          "passed": true,
+          "evidence": "Output contains full timestamped segments from transcribe.py"
+        },
+        {
+          "text": "summary_provided",
+          "passed": true,
+          "evidence": "Dedicated Summary section: 'The reel covers OpenCLI, a brand-new open-source GitHub project (2,000 stars within days of launch)...'"
+        },
+        {
+          "text": "dive_deeper_invited",
+          "passed": true,
+          "evidence": "Follow-up: 'Want me to dig into any of the ideas or tools mentioned here? For example, I can look up the OpenCLI repo...'"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 71.2,
+        "tokens": 13451,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "script_was_executed",
+          "passed": true,
+          "evidence": "Full timestamped transcript segments present in output"
+        },
+        {
+          "text": "tool_identified",
+          "passed": true,
+          "evidence": "Explicitly names 'OpenCLI' as the tool: 'The creator is talking about OpenCLI, a new open-source GitHub project...'"
+        },
+        {
+          "text": "research_or_discussion_offered",
+          "passed": true,
+          "evidence": "Ends with: 'Want me to dig into OpenCLI further \u00e2\u20ac\u201d find the GitHub repo, look at what adapters are available, or explore how it compares to other browser automation tools?'"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 0,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 79.4,
+        "tokens": 16755,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "script_was_executed",
+          "passed": true,
+          "evidence": "Output contains timestamped segments ([0.0s -> 2.2s], etc.) which are only produced by running transcribe.py"
+        },
+        {
+          "text": "transcript_contains_keywords",
+          "passed": true,
+          "evidence": "Output contains 'OpenCLI', 'CLI', 'browser automation', and 'Cloud Code' (Claude Code, as spoken by presenter)"
+        },
+        {
+          "text": "follow_up_discussion_offered",
+          "passed": true,
+          "evidence": "Ends with: 'Want me to dig into any of the ideas or tools mentioned here \u00e2\u20ac\u201d like how OpenCLI works, how it compares to Playwright...'"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.0,
+        "passed": 0,
+        "failed": 3,
+        "total": 3,
+        "time_seconds": 64.3,
+        "tokens": 12686,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "script_was_executed",
+          "passed": false,
+          "evidence": "Hit Instagram login wall; no script run"
+        },
+        {
+          "text": "summary_provided",
+          "passed": false,
+          "evidence": "No content retrieved; only instructions for user to get it themselves"
+        },
+        {
+          "text": "dive_deeper_invited",
+          "passed": false,
+          "evidence": "Response is a dead-end failure message, no follow-up possible"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.0,
+        "passed": 0,
+        "failed": 3,
+        "total": 3,
+        "time_seconds": 65.3,
+        "tokens": 12800,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "script_was_executed",
+          "passed": false,
+          "evidence": "Only WebFetch and WebSearch used; no transcription script"
+        },
+        {
+          "text": "tool_identified",
+          "passed": false,
+          "evidence": "Explicitly states 'Tool mentioned: NOT IDENTIFIED'"
+        },
+        {
+          "text": "research_or_discussion_offered",
+          "passed": false,
+          "evidence": "Only offers instructions for the user to do it manually; can't discuss the tool since it's unknown"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 0,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.0,
+        "passed": 0,
+        "failed": 3,
+        "total": 3,
+        "time_seconds": 49.7,
+        "tokens": 11545,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "script_was_executed",
+          "passed": false,
+          "evidence": "Used WebFetch only; explicitly states 'No script was run'"
+        },
+        {
+          "text": "transcript_contains_keywords",
+          "passed": false,
+          "evidence": "Output contains no transcript content at all; says 'Unable to transcribe'"
+        },
+        {
+          "text": "follow_up_discussion_offered",
+          "passed": false,
+          "evidence": "No follow-up offered; response ends with failure notice"
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 76.6,
+        "stddev": 4.6776,
+        "min": 71.2,
+        "max": 79.4
+      },
+      "tokens": {
+        "mean": 15602.6667,
+        "stddev": 1864.9676,
+        "min": 13451,
+        "max": 16755
+      }
+    },
+    "without_skill": {
+      "pass_rate": {
+        "mean": 0.0,
+        "stddev": 0.0,
+        "min": 0.0,
+        "max": 0.0
+      },
+      "time_seconds": {
+        "mean": 59.7667,
+        "stddev": 8.7323,
+        "min": 49.7,
+        "max": 65.3
+      },
+      "tokens": {
+        "mean": 12343.6667,
+        "stddev": 694.0103,
+        "min": 11545,
+        "max": 12800
+      }
+    },
+    "delta": {
+      "pass_rate": "+1.00",
+      "time_seconds": "+16.8",
+      "tokens": "+3259"
+    }
+  },
+  "notes": []
+}

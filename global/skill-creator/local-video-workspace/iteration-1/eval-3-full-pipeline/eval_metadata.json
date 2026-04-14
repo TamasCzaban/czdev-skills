@@ -1,0 +1,27 @@
+{
+  "eval_id": 3,
+  "eval_name": "full-pipeline-plan",
+  "prompt": "I want to make a ~30 second demo video for my new sales dashboard app. It's built with Python and Plotly Dash, deployed on Heroku. Key features: real-time sales charts, team leaderboard, territory mapping, and CSV export. I have screenshots ready. The video should be in English. Walk me through the full pipeline from script to MP4.",
+  "assertions": [
+    {
+      "name": "writes-30s-script",
+      "description": "Provides an actual narration script of approximately 65-75 words targeting ~30 seconds (not just describes one)"
+    },
+    {
+      "name": "uses-kokoro-for-english",
+      "description": "Recommends Kokoro (not Edge TTS) for the English voiceover, with a specific voice name (adam/onyx/etc)"
+    },
+    {
+      "name": "correct-render-entry-point",
+      "description": "Specifies src/index.ts (not src/Root.tsx) as the render entry point for the remotion render command"
+    },
+    {
+      "name": "mentions-persistent-background",
+      "description": "Mentions adding a persistent background AbsoluteFill as first child to prevent transparent flashes"
+    },
+    {
+      "name": "covers-timestamp-to-timing-mapping",
+      "description": "Explains how Whisper timestamps map to Remotion TIMING constants / scene frame boundaries"
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "eval_id": 2,
+  "eval_name": "eval-discuss",
+  "configuration": "with_skill",
+  "expectations": [
+    {
+      "text": "script_was_executed",
+      "passed": true,
+      "evidence": "Full timestamped transcript segments present in output"
+    },
+    {
+      "text": "tool_identified",
+      "passed": true,
+      "evidence": "Explicitly names 'OpenCLI' as the tool: 'The creator is talking about OpenCLI, a new open-source GitHub project...'"
+    },
+    {
+      "text": "research_or_discussion_offered",
+      "passed": true,
+      "evidence": "Ends with: 'Want me to dig into OpenCLI further \u00e2\u20ac\u201d find the GitHub repo, look at what adapters are available, or explore how it compares to other browser automation tools?'"
+    }
+  ],
+  "pass_rate": 1.0,
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "total": 3,
+    "pass_rate": 1.0
+  }
+}

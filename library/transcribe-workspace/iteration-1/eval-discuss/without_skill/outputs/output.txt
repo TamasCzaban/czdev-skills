@@ -1,0 +1,24 @@
+Task: Identify tool mentioned in Instagram Reel https://www.instagram.com/reels/DWIjdfEtNbl/
+
+Result: UNABLE TO COMPLETE
+
+Reason:
+The Instagram Reel at the provided URL requires user authentication to view. When attempting to fetch the page directly, only CSS variables, JSON configuration data, and Meta/Instagram infrastructure markup were returned — no video content, captions, audio transcript, or product mentions were accessible.
+
+A web search for the specific reel ID "DWIjdfEtNbl" returned no relevant results — only generic pages about Instagram Reels tools in general.
+
+What was attempted:
+1. Direct WebFetch of https://www.instagram.com/reels/DWIjdfEtNbl/
+   - Result: Only backend infrastructure markup returned (CSS variables, feature flags, JS init params). No user-facing content.
+
+2. WebSearch for "instagram reel DWIjdfEtNbl tool mentioned"
+   - Result: No specific results for this reel ID. General Instagram Reels tool pages returned.
+
+Transcript: NOT AVAILABLE
+Tool mentioned: NOT IDENTIFIED
+
+Recommendation:
+To identify the tool mentioned in this reel, the user should:
+- Open the reel directly in their Instagram app or browser while logged in
+- Manually paste any visible text, captions, or audio transcript
+- Or use Instagram's built-in transcript/caption feature if available on the reel

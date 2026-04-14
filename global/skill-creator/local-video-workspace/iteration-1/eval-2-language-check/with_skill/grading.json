@@ -1,0 +1,8 @@
+{
+  "expectations": [
+    {"text": "flags-all-three-brand-names", "passed": true, "evidence": "Flagged Streamlit (High), PostgreSQL (High), Redis (Medium) — plus caught 'Powered', 'live', 'Tool' as bonus"},
+    {"text": "suggests-replacements-or-splice", "passed": true, "evidence": "Concrete action for each: 'Powered by' → 'Betrieben mit', 'live' → 'produktiv im Einsatz', brand names → splice with en-US-AriaNeural + SSML breaks"},
+    {"text": "recommends-german-edge-tts-voice", "passed": true, "evidence": "de-DE-KatjaNeural explicitly recommended via Edge TTS"}
+  ],
+  "summary": {"passed": 3, "failed": 0, "total": 3, "pass_rate": 1.0}
+}

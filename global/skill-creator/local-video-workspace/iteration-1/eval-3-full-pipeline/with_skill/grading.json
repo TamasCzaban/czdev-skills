@@ -1,0 +1,10 @@
+{
+  "expectations": [
+    {"text": "writes-30s-script", "passed": true, "evidence": "65-word English script provided following Hook→Solution→Features→Credibility→Close structure"},
+    {"text": "uses-kokoro-for-english", "passed": true, "evidence": "Kokoro with 'adam' voice: python kokoro_generate.py '<script>' sales-dashboard adam"},
+    {"text": "correct-render-entry-point", "passed": true, "evidence": "npx remotion render src/index.ts SalesDashboard ... — explicitly uses src/index.ts not Root.tsx"},
+    {"text": "mentions-persistent-background", "passed": true, "evidence": "AbsoluteFill style={{ background: '#0d0d1f' }} called out as 'mandatory first child' to prevent black flashes"},
+    {"text": "covers-timestamp-to-timing-mapping", "passed": true, "evidence": "frame = round(seconds * 30) formula explained, TIMING constants wired from Whisper output"}
+  ],
+  "summary": {"passed": 5, "failed": 0, "total": 5, "pass_rate": 1.0}
+}

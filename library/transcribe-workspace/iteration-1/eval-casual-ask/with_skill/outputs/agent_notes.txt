@@ -1,0 +1,12 @@
+## Agent Notes — eval-casual-ask / with_skill
+
+**Did you offer to dive deeper after transcribing?**
+Yes. After the summary, a follow-up prompt was included offering to look up the OpenCLI repo, compare it to similar tools, or explore how the user could apply it to their own projects. This matches the skill instruction: "Ask the user if they want to discuss, research, or act on the content — don't wait for them to ask."
+
+**Did you give a summary?**
+Yes. A 2-sentence summary was provided after the full transcript, identifying the tool (OpenCLI), its core capability (browser automation as a CLI layer for Claude Code), and its notable stats (2,000 stars, 53 adapters). This matches the skill instruction: "briefly summarize what the video is about in 1-2 sentences so the user has instant context."
+
+**Other observations:**
+- Transcript quality was high (Whisper large-v3, 100% English confidence).
+- The reel was publicly accessible; no Chrome cookie fallback was needed.
+- Total runtime was fast (~15s for a ~76s clip on GPU).

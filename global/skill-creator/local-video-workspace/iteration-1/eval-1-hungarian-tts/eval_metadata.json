@@ -1,0 +1,27 @@
+{
+  "eval_id": 1,
+  "eval_name": "hungarian-tts",
+  "prompt": "I need to generate a Hungarian voiceover for this script, and I also need word-level timestamps so I can sync it to my Remotion video. The script is: 'A MedKölcsön egy célszoftver orvostechnikai eszközök kezelésére. Modern webalkalmazás, Firebase és Streamlit alapokon. Háromszázkilencvenegy automatikus teszt. Éles üzemben, valódi ügyfelekkel.' Target language is Hungarian. Please check for any language issues in the script first, then generate the audio and get me the timestamps.",
+  "assertions": [
+    {
+      "name": "flags-foreign-brand-names",
+      "description": "Identifies Firebase and Streamlit as foreign/English words in the Hungarian script and explicitly flags them"
+    },
+    {
+      "name": "uses-noemi-voice",
+      "description": "Uses hu-HU-NoemiNeural (or hu-HU-TamasNeural) for Hungarian TTS — not a Kokoro voice"
+    },
+    {
+      "name": "includes-mp3-to-wav-conversion",
+      "description": "Includes ffmpeg command to convert Edge TTS MP3 output to WAV before Whisper"
+    },
+    {
+      "name": "whisper-language-hint",
+      "description": "Whisper transcribe() call includes language='hu' parameter for accuracy"
+    },
+    {
+      "name": "provides-frame-number-formula",
+      "description": "Explains how to convert seconds to Remotion frame numbers (multiply by fps, typically 30)"
+    }
+  ]
+}

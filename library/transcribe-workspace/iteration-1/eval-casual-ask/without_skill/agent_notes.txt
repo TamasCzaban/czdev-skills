@@ -1,0 +1,23 @@
+## Agent Notes — Without Skill Run
+
+### What I did
+The user shared an Instagram Reel URL (https://www.instagram.com/reels/DWIjdfEtNbl/) and asked me to pull what was being said in the video.
+
+### Did I try to access the URL?
+Yes. I made a direct HTTP GET request to the URL using curl with a standard browser User-Agent header.
+
+### Was I able to get a transcript?
+No. Instagram returned a full HTML page (~560KB), but it was the standard login/redirect wall. There was no embedded video content, audio stream, caption data, or Open Graph description that would reveal what was said in the reel. The page is essentially a shell that requires JavaScript execution in an authenticated browser session to render any actual content.
+
+### Why this approach fails for Instagram
+- Instagram blocks unauthenticated scrapers and returns a login wall
+- Video content and captions are loaded dynamically via authenticated API calls, not in the initial HTML
+- There is no publicly accessible API endpoint for reel transcripts without credentials
+
+### What would work
+- User pastes the spoken content or caption manually
+- A third-party tool with Instagram auth downloads the video, then audio is transcribed
+- The transcribe skill (if it handles video download + audio transcription) could potentially do this if it has appropriate integrations
+
+### Verdict
+Without the skill, this task is a dead end for Instagram Reels. The URL is inaccessible to unauthenticated programmatic requests.

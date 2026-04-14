@@ -1,0 +1,52 @@
+TRANSCRIPT — https://www.instagram.com/reels/DWIjdfEtNbl/
+============================================================
+
+TIMESTAMPED SEGMENTS:
+
+  [0.0s -> 2.2s] If you've been paying attention to the Cloud Code ecosystem,
+  [2.3s -> 5.7s] then you have noticed a huge shift towards CLI tools.
+  [5.8s -> 7.5s] And we're seeing GitHub repos like this
+  [7.5s -> 9.0s] open up every single day.
+  [9.2s -> 11.2s] This is the OpenCLI GitHub.
+  [11.3s -> 12.5s] It just came out a few days ago.
+  [12.6s -> 14.1s] It's already at 2000 stars.
+  [14.4s -> 17.2s] And what this does, it allows you to make any website
+  [17.2s -> 20.7s] or Electron app or local tool into a CLI.
+  [21.0s -> 24.8s] Now, if you remember the CLI anything tool,
+  [25.0s -> 26.4s] it was somewhat similar to this.
+  [26.4s -> 29.1s] However, this new OpenCLI tool
+  [29.1s -> 32.1s] is really almost like browser automation-based
+  [32.1s -> 34.4s] because I can point this tool at something like Reddit.
+  [35.1s -> 38.3s] And then even if you don't have access to the Reddit API,
+  [39.0s -> 42.5s] you can essentially control a browser on Reddit
+  [42.5s -> 43.7s] from Cloud Code.
+  [44.3s -> 49.4s] And this particular GitHub has like 53 different adapters
+  [49.4s -> 51.0s] built in for things like Reddit,
+  [51.2s -> 52.3s] for things like Hacker News.
+  [52.8s -> 53.8s] It goes on and on and on.
+  [53.8s -> 56.1s] You can see here Codex, Cursor, Twitter,
+  [56.4s -> 56.6s] right?
+  [56.7s -> 60.9s] So essentially think of it as a way to use Cloud Code
+  [60.9s -> 63.5s] with like almost a built-in browser automation
+  [63.5s -> 66.6s] on websites that either you can't use
+  [66.6s -> 68.1s] a traditional browser automation on
+  [68.1s -> 69.6s] or like an API that doesn't exist.
+  [70.0s -> 72.3s] So actually kind of cool, right?
+  [72.4s -> 73.9s] Again, this just came out a few days ago,
+  [74.0s -> 74.8s] completely open source.
+  [75.0s -> 76.5s] Definitely suggest checking it out.
+
+============================================================
+FULL TRANSCRIPT:
+============================================================
+If you've been paying attention to the Cloud Code ecosystem, then you have noticed a huge shift towards CLI tools. And we're seeing GitHub repos like this open up every single day. This is the OpenCLI GitHub. It just came out a few days ago. It's already at 2000 stars. And what this does, it allows you to make any website or Electron app or local tool into a CLI. Now, if you remember the CLI anything tool, it was somewhat similar to this. However, this new OpenCLI tool is really almost like browser automation-based because I can point this tool at something like Reddit. And then even if you don't have access to the Reddit API, you can essentially control a browser on Reddit from Cloud Code. And this particular GitHub has like 53 different adapters built in for things like Reddit, for things like Hacker News. It goes on and on and on. You can see here Codex, Cursor, Twitter, right? So essentially think of it as a way to use Cloud Code with like almost a built-in browser automation on websites that either you can't use a traditional browser automation on or like an API that doesn't exist. So actually kind of cool, right? Again, this just came out a few days ago, completely open source. Definitely suggest checking it out.
+
+============================================================
+SUMMARY:
+============================================================
+This reel covers OpenCLI, a newly released open-source GitHub project (~2000 stars at time of recording) that turns any website, Electron app, or local tool into a CLI interface. The creator frames it as browser-automation-style access to sites like Reddit or Hacker News — even without an official API — usable directly from Claude Code. It ships with 53 built-in adapters covering platforms like Reddit, Hacker News, Codex, Cursor, and Twitter.
+
+============================================================
+FOLLOW-UP OFFERED:
+============================================================
+Want me to dig into any of the ideas or tools mentioned here — like how OpenCLI works, how it compares to Playwright or other browser automation approaches, or how you could use it in a project?

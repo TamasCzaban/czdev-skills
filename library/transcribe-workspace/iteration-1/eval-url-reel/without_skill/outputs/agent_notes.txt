@@ -1,0 +1,22 @@
+AGENT NOTES — Without Skill Run
+Date: 2026-03-24
+
+## What I did
+1. Checked if the output directory existed (it did not) and created it.
+2. Used the WebFetch tool to attempt fetching https://www.instagram.com/reels/DWIjdfEtNbl/
+3. Prompted WebFetch to extract any spoken words, captions, text overlays, or audio transcript from the reel.
+
+## Was I able to transcribe it?
+No. Instagram blocked the request or returned a non-content response. WebFetch received only CSS custom properties, color variables, animation timings, and system configuration JSON — none of which is user-generated content or audio.
+
+## Did I run any script?
+No. No scripts were written or executed. I relied solely on the built-in WebFetch tool to attempt the URL fetch, and the Bash tool only to create the output directory.
+
+## Why it failed
+Instagram requires login/authentication to view reel content. Unauthenticated fetches hit a login wall or a static shell page with no reel data. WebFetch has no mechanism to authenticate with Instagram.
+
+## What a skill would likely need to do differently
+- Use yt-dlp or a similar tool to download the video (which can sometimes bypass the auth wall for public reels).
+- Extract audio from the downloaded video file.
+- Run a local or API-based speech-to-text model (e.g., Whisper) on the audio.
+- Return the transcript text.

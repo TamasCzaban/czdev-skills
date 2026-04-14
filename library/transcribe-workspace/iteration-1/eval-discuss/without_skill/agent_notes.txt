@@ -1,0 +1,29 @@
+Agent Notes — Without Skill Run
+
+Task: Extract content/tool from Instagram Reel https://www.instagram.com/reels/DWIjdfEtNbl/
+
+## What did I do?
+
+1. Attempted WebFetch on the Instagram reel URL directly.
+   - Instagram requires authentication; the fetched page returned only CSS variables, layout data, feature flag JSON, and JS initialization parameters — none of the actual video content, captions, or description.
+
+2. Attempted WebSearch for the specific reel ID ("DWIjdfEtNbl tool mentioned").
+   - No results matched the specific reel. Only generic Instagram Reels-related pages were returned.
+
+## Could you identify the tool mentioned?
+
+NO. The reel content was not accessible without authentication. Neither the direct page fetch nor a web search returned any information about a specific tool mentioned in this video.
+
+## Could you provide a transcript?
+
+NO. Transcription requires access to the video's audio or captions. Since Instagram returned no renderable content to unauthenticated requests, there was nothing to transcribe.
+
+## Key Limitation
+
+Instagram Reels are behind a login wall. Without authenticated access or a tool that can handle Instagram's authentication and media extraction, it is not possible to retrieve the video content, audio, or metadata from a reel URL alone.
+
+## What would have helped?
+
+- A specialized tool that can authenticate with Instagram and extract reel content/captions
+- The user manually pasting the transcript or caption text from the reel
+- A tool capable of downloading and transcribing the video audio directly

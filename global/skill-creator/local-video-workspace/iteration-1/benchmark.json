@@ -1,0 +1,303 @@
+{
+  "metadata": {
+    "skill_name": "local-tts + remotion-portfolio-video + local-video",
+    "skill_path": "<path/to/skill>",
+    "executor_model": "<model-name>",
+    "analyzer_model": "<model-name>",
+    "timestamp": "2026-04-01T10:26:20Z",
+    "evals_run": [
+      1,
+      2,
+      3
+    ],
+    "runs_per_configuration": 3
+  },
+  "runs": [
+    {
+      "eval_id": 1,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 83.7,
+        "tokens": 20109,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "flags-foreign-brand-names",
+          "passed": true,
+          "evidence": "Firebase (position 7) and Streamlit (position 9) explicitly flagged by langdetect scan, user offered replace vs splice options"
+        },
+        {
+          "text": "uses-noemi-voice",
+          "passed": true,
+          "evidence": "hu-HU-NoemiNeural selected for Hungarian TTS via Edge TTS, not Kokoro"
+        },
+        {
+          "text": "includes-mp3-to-wav-conversion",
+          "passed": true,
+          "evidence": "ffmpeg -i medkolcson_main.mp3 medkolcson_main.wav -y included after Edge TTS generation"
+        },
+        {
+          "text": "whisper-language-hint",
+          "passed": true,
+          "evidence": "word_timestamps=True, language='hu' passed to model.transcribe()"
+        },
+        {
+          "text": "provides-frame-number-formula",
+          "passed": true,
+          "evidence": "Automatically calculated frame = round(seconds * 30) and printed total_frames for durationInFrames"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 3,
+        "failed": 0,
+        "total": 3,
+        "time_seconds": 52.5,
+        "tokens": 18860,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "flags-all-three-brand-names",
+          "passed": true,
+          "evidence": "Flagged Streamlit (High), PostgreSQL (High), Redis (Medium) \u00e2\u20ac\u201d plus caught 'Powered', 'live', 'Tool' as bonus"
+        },
+        {
+          "text": "suggests-replacements-or-splice",
+          "passed": true,
+          "evidence": "Concrete action for each: 'Powered by' \u00e2\u2020\u2019 'Betrieben mit', 'live' \u00e2\u2020\u2019 'produktiv im Einsatz', brand names \u00e2\u2020\u2019 splice with en-US-AriaNeural + SSML breaks"
+        },
+        {
+          "text": "recommends-german-edge-tts-voice",
+          "passed": true,
+          "evidence": "de-DE-KatjaNeural explicitly recommended via Edge TTS"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "with_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 1.0,
+        "passed": 5,
+        "failed": 0,
+        "total": 5,
+        "time_seconds": 87.3,
+        "tokens": 25839,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "writes-30s-script",
+          "passed": true,
+          "evidence": "65-word English script provided following Hook\u00e2\u2020\u2019Solution\u00e2\u2020\u2019Features\u00e2\u2020\u2019Credibility\u00e2\u2020\u2019Close structure"
+        },
+        {
+          "text": "uses-kokoro-for-english",
+          "passed": true,
+          "evidence": "Kokoro with 'adam' voice: python kokoro_generate.py '<script>' sales-dashboard adam"
+        },
+        {
+          "text": "correct-render-entry-point",
+          "passed": true,
+          "evidence": "npx remotion render src/index.ts SalesDashboard ... \u00e2\u20ac\u201d explicitly uses src/index.ts not Root.tsx"
+        },
+        {
+          "text": "mentions-persistent-background",
+          "passed": true,
+          "evidence": "AbsoluteFill style={{ background: '#0d0d1f' }} called out as 'mandatory first child' to prevent black flashes"
+        },
+        {
+          "text": "covers-timestamp-to-timing-mapping",
+          "passed": true,
+          "evidence": "frame = round(seconds * 30) formula explained, TIMING constants wired from Whisper output"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 1,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.2,
+        "passed": 1,
+        "failed": 4,
+        "total": 5,
+        "time_seconds": 56.9,
+        "tokens": 16455,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "flags-foreign-brand-names",
+          "passed": false,
+          "evidence": "Did not flag Firebase or Streamlit. Said script was 'correct and natural' with 'no changes needed'"
+        },
+        {
+          "text": "uses-noemi-voice",
+          "passed": false,
+          "evidence": "Recommended ElevenLabs eleven_multilingual_v2 as primary \u00e2\u20ac\u201d paid API. gTTS as free fallback, not Edge TTS Noemi"
+        },
+        {
+          "text": "includes-mp3-to-wav-conversion",
+          "passed": false,
+          "evidence": "No MP3-to-WAV conversion mentioned \u00e2\u20ac\u201d ElevenLabs returns base64, gTTS path not detailed"
+        },
+        {
+          "text": "whisper-language-hint",
+          "passed": false,
+          "evidence": "Whisper mentioned as fallback but language= parameter not specified"
+        },
+        {
+          "text": "provides-frame-number-formula",
+          "passed": true,
+          "evidence": "Mentioned useCurrentFrame()/fps for Remotion and seconds-based timestamp lookup"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 2,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.667,
+        "passed": 2,
+        "failed": 1,
+        "total": 3,
+        "time_seconds": 51.8,
+        "tokens": 15337,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "flags-all-three-brand-names",
+          "passed": true,
+          "evidence": "Flagged Streamlit, PostgreSQL, Redis \u00e2\u20ac\u201d plus 'live' and 'Powered by'. Good general linguistic awareness"
+        },
+        {
+          "text": "suggests-replacements-or-splice",
+          "passed": true,
+          "evidence": "Suggested German rewrites and phoneme SSML overrides per brand name. Concrete enough"
+        },
+        {
+          "text": "recommends-german-edge-tts-voice",
+          "passed": false,
+          "evidence": "No specific TTS voice or engine named \u00e2\u20ac\u201d focused on SSML phoneme overrides and on-screen text, never recommended a de-DE Edge TTS voice"
+        }
+      ],
+      "notes": []
+    },
+    {
+      "eval_id": 3,
+      "configuration": "without_skill",
+      "run_number": 1,
+      "result": {
+        "pass_rate": 0.2,
+        "passed": 1,
+        "failed": 4,
+        "total": 5,
+        "time_seconds": 91.8,
+        "tokens": 18177,
+        "tool_calls": 0,
+        "errors": 0
+      },
+      "expectations": [
+        {
+          "text": "writes-30s-script",
+          "passed": true,
+          "evidence": "~70-word script provided with 6 beats mapped to features"
+        },
+        {
+          "text": "uses-kokoro-for-english",
+          "passed": false,
+          "evidence": "Used edge-tts (Microsoft neural) instead of Kokoro \u00e2\u20ac\u201d doesn't know about local Kokoro setup"
+        },
+        {
+          "text": "correct-render-entry-point",
+          "passed": false,
+          "evidence": "No Remotion used \u00e2\u20ac\u201d chose ffmpeg concat slideshow approach entirely; render entry point concept n/a"
+        },
+        {
+          "text": "mentions-persistent-background",
+          "passed": false,
+          "evidence": "No Remotion, so no concept of persistent background AbsoluteFill"
+        },
+        {
+          "text": "covers-timestamp-to-timing-mapping",
+          "passed": false,
+          "evidence": "Used ffmpeg timing table (seconds per slide) \u00e2\u20ac\u201d no Remotion TIMING constants or frame number conversion"
+        }
+      ],
+      "notes": []
+    }
+  ],
+  "run_summary": {
+    "with_skill": {
+      "pass_rate": {
+        "mean": 1.0,
+        "stddev": 0.0,
+        "min": 1.0,
+        "max": 1.0
+      },
+      "time_seconds": {
+        "mean": 74.5,
+        "stddev": 19.1374,
+        "min": 52.5,
+        "max": 87.3
+      },
+      "tokens": {
+        "mean": 21602.6667,
+        "stddev": 3721.5441,
+        "min": 18860,
+        "max": 25839
+      }
+    },
+    "without_skill": {
+      "pass_rate": {
+        "mean": 0.3557,
+        "stddev": 0.2696,
+        "min": 0.2,
+        "max": 0.667
+      },
+      "time_seconds": {
+        "mean": 66.8333,
+        "stddev": 21.7716,
+        "min": 51.8,
+        "max": 91.8
+      },
+      "tokens": {
+        "mean": 16656.3333,
+        "stddev": 1430.6646,
+        "min": 15337,
+        "max": 18177
+      }
+    },
+    "delta": {
+      "pass_rate": "+0.64",
+      "time_seconds": "+7.7",
+      "tokens": "+4946"
+    }
+  },
+  "notes": []
+}

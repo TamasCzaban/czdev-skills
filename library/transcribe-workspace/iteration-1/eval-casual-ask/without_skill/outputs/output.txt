@@ -1,0 +1,9 @@
+Unable to retrieve transcript.
+
+The URL provided (https://www.instagram.com/reels/DWIjdfEtNbl/) points to an Instagram Reel. When accessed programmatically, Instagram returns an HTML login wall — it does not expose video content, captions, or audio transcripts to unauthenticated requests.
+
+No transcript or spoken content could be extracted from this link.
+
+To get the transcript or key ideas from this reel, please:
+1. Watch the reel yourself and paste in what they're saying, OR
+2. Use an Instagram-authenticated session or a third-party downloader to get the video, then share the audio/text here.

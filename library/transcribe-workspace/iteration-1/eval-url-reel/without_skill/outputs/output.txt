@@ -1,0 +1,9 @@
+TRANSCRIPTION ATTEMPT — WITHOUT SKILL
+URL: https://www.instagram.com/reels/DWIjdfEtNbl/
+Date: 2026-03-24
+
+RESULT: Unable to transcribe.
+
+Instagram requires authentication to access reel content. The WebFetch tool retrieved only CSS styling variables and system configuration data (color schemes, spacing values, asset URLs) — not the video page HTML, audio, or any user-generated content.
+
+No spoken words, captions, or text overlays could be extracted.

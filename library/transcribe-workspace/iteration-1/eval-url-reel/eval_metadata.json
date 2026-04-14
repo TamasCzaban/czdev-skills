@@ -1,0 +1,19 @@
+{
+  "eval_id": 0,
+  "eval_name": "eval-url-reel",
+  "prompt": "transcribe this reel for me: https://www.instagram.com/reels/DWIjdfEtNbl/",
+  "assertions": [
+    {
+      "name": "script_was_executed",
+      "description": "The agent actually ran the transcribe.py script via Bash rather than just explaining how to do it"
+    },
+    {
+      "name": "transcript_contains_keywords",
+      "description": "The output contains key terms from the video: 'Claude Code', 'CLI', 'OpenCLI', 'browser automation'"
+    },
+    {
+      "name": "follow_up_discussion_offered",
+      "description": "The agent offered to discuss, research, or dive deeper into the content after showing the transcript"
+    }
+  ]
+}

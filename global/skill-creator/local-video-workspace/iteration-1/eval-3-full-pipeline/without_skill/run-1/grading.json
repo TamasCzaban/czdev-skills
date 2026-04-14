@@ -1,0 +1,10 @@
+{
+  "expectations": [
+    {"text": "writes-30s-script", "passed": true, "evidence": "~70-word script provided with 6 beats mapped to features"},
+    {"text": "uses-kokoro-for-english", "passed": false, "evidence": "Used edge-tts (Microsoft neural) instead of Kokoro — doesn't know about local Kokoro setup"},
+    {"text": "correct-render-entry-point", "passed": false, "evidence": "No Remotion used — chose ffmpeg concat slideshow approach entirely; render entry point concept n/a"},
+    {"text": "mentions-persistent-background", "passed": false, "evidence": "No Remotion, so no concept of persistent background AbsoluteFill"},
+    {"text": "covers-timestamp-to-timing-mapping", "passed": false, "evidence": "Used ffmpeg timing table (seconds per slide) — no Remotion TIMING constants or frame number conversion"}
+  ],
+  "summary": {"passed": 1, "failed": 4, "total": 5, "pass_rate": 0.2}
+}
