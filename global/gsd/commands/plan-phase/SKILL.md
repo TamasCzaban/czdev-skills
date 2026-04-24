@@ -18,6 +18,29 @@ Creates detailed execution plans for project phases using gsd-planner agent.
 
 ## Process
 
+### 0. Claim the GitHub issue (if linked)
+
+Read the phase's block in `.planning/ROADMAP.md`. Look for a line matching
+`**GitHub Issue:** #<N>`.
+
+If found, run:
+
+```bash
+CURRENT_USER=$(gh api user --jq .login 2>/dev/null)
+gh issue edit <N> --add-assignee @me 2>/dev/null
+echo "Claimed issue #<N> for ${CURRENT_USER}"
+```
+
+This is idempotent — `gh` exits 0 if you are already assigned. Skip silently
+if:
+- No `**GitHub Issue:**` line in the phase entry
+- `gh` is not authenticated (do not block planning on this)
+
+Rationale: planning is the real "I'm starting this" moment. Scaffolding
+(`issue-to-gsd`) and PRD creation can be speculative; `/gsd:plan-phase` is not.
+
+### 1–5. Create the plan
+
 1. Analyze wave description and acceptance criteria
 2. Load codebase map for context (if exists)
 3. Spawn gsd-planner agent to create phase plan

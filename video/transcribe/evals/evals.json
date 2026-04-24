@@ -1,0 +1,65 @@
+{
+  "skill_name": "transcribe",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "transcribe this reel for me: https://www.instagram.com/reels/DWIjdfEtNbl/",
+      "expected_output": "Runs the transcribe.py script, shows the transcript with timestamps, and offers to discuss the content. Transcript should mention 'Claude Code', 'CLI tools', 'OpenCLI', and 'browser automation'.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "script_was_executed",
+          "description": "The agent actually ran the transcribe.py script via Bash rather than just explaining how to do it"
+        },
+        {
+          "name": "transcript_contains_keywords",
+          "description": "The output contains key terms from the video: 'Claude Code', 'CLI', 'OpenCLI', 'browser automation'"
+        },
+        {
+          "name": "follow_up_discussion_offered",
+          "description": "The agent offered to discuss, research, or dive deeper into the content after showing the transcript"
+        }
+      ]
+    },
+    {
+      "id": 1,
+      "prompt": "hey i just saw this reel and want to dive deeper into the idea — can you pull what they're saying? https://www.instagram.com/reels/DWIjdfEtNbl/",
+      "expected_output": "Runs the transcribe.py script, shows the transcript, gives a brief summary, and proactively invites a deeper discussion about the ideas in the video.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "script_was_executed",
+          "description": "The agent actually ran the transcribe.py script via Bash"
+        },
+        {
+          "name": "summary_provided",
+          "description": "The agent gave a brief 1-2 sentence summary of what the video is about, not just the raw transcript"
+        },
+        {
+          "name": "dive_deeper_invited",
+          "description": "The agent proactively invited the user to explore the ideas further, matching the user's stated intent to 'dive deeper'"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "what does this video say https://www.instagram.com/reels/DWIjdfEtNbl/ i want to know more about the tool mentioned",
+      "expected_output": "Runs the transcribe.py script, shows the transcript, identifies the tool being discussed (OpenCLI), and offers to research or discuss it further.",
+      "files": [],
+      "assertions": [
+        {
+          "name": "script_was_executed",
+          "description": "The agent actually ran the transcribe.py script via Bash"
+        },
+        {
+          "name": "tool_identified",
+          "description": "The agent specifically identified 'OpenCLI' as the tool mentioned in the video"
+        },
+        {
+          "name": "research_or_discussion_offered",
+          "description": "The agent offered to research or discuss OpenCLI further, responding to the user's stated interest"
+        }
+      ]
+    }
+  ]
+}

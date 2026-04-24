@@ -75,6 +75,8 @@ Run steps 2, 3, and 5:
 
 **Locate the issue-to-gsd skill** at `.claude/skills/issue-to-gsd/SKILL.md` within the project.
 
+> **Ownership note:** `issue-to-gsd` warns if an issue is already assigned to someone else but does **not** write an assignment itself — scaffold is reversible, a public GitHub assignment is not. GitHub ownership is claimed automatically when the user later runs `/gsd:plan-phase <NN>` (step 0 of that skill).
+
 Run issue-to-gsd **sequentially** for each issue in `$SLICE_ISSUES`, in dependency order (blockers first). For each issue:
 
 1. Follow the full issue-to-gsd protocol (fetch issue, check blockers, determine phase number, create branch, append ROADMAP.md, update STATE.md, commit)
@@ -113,3 +115,34 @@ If the user breaks off mid-pipeline ("let's stop here", "I'll handle the rest la
 - Stopped after Phase 1: "Resume by running `/write-a-prd` with the Decision Summary above"
 - Stopped after Phase 2: "Resume by running `/prd-to-issues $PRD_ISSUE`"
 - Stopped after Phase 3: "Resume by running `/issue-to-gsd <issue-N>` for each open slice"
+
+---
+
+## Common Rationalizations
+
+These are excuses you might generate to skip or collapse pipeline phases. Reject them.
+
+| Rationalization | Why it's wrong |
+|---|---|
+| "The idea is simple — I can skip the PRD and go straight to issues." | Scope creep and missing edge cases originate in undocumented assumptions. The PRD is the contract, not overhead. |
+| "The Decision Summary already covers everything — I'll write a minimal PRD." | The PRD is for GitHub, not for you. It must be self-contained so future contributors (and future Claude sessions) have full context without reading this conversation. |
+| "I'll combine multiple concerns into one slice issue to keep the list short." | Thin vertical slices exist so each issue maps to a reviewable PR. Fat issues produce fat PRs. Preserve granularity. |
+| "I already know the codebase well enough — I'll skip the repo exploration in Phase 2." | The Decision Summary is based on what the user said, not on what the code actually does. Exploration catches contradictions before they become bad PRD assumptions. |
+| "The user said continue quickly — I'll auto-approve and skip the gate." | Phase 1 has exactly one gate for a reason. The Decision Summary is the only point where the user can correct the direction before hours of downstream work are scaffolded. Never skip it. |
+| "Phases 3 and 4 are mechanical — I'll run them in parallel or out of order." | Phase 4 depends on issue numbers from Phase 3. Phase 3 depends on the PRD issue from Phase 2. Dependency order is not optional. |
+
+---
+
+## Verification
+
+Before declaring the pipeline complete, confirm every item:
+
+- [ ] Phase 1: Decision Summary produced and user approved it explicitly (said "continue" or equivalent)
+- [ ] Phase 2: PRD GitHub issue created — URL printed, `$PRD_ISSUE` recorded
+- [ ] Phase 3: All slice issues created in dependency order (blockers first) — issue numbers recorded as `$SLICE_ISSUES`
+- [ ] Phase 3: Each slice issue references `$PRD_ISSUE` as its parent
+- [ ] Phase 4: One feature branch created per slice issue — branch names follow project convention
+- [ ] Phase 4: ROADMAP.md updated with a phase entry for each issue, including Testing Strategy field (None must be explicit with reason, not silent)
+- [ ] Phase 4: STATE.md updated to reflect next executable phase
+- [ ] Phase 4: All scaffold commits pushed or staged — no orphaned local-only branches
+- [ ] Final summary printed with PRD issue, all slice issue numbers, all phase numbers, and exact resume commands

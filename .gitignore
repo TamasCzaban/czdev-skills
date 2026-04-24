@@ -1,0 +1,5 @@
+node_modules/
+browser-profile/
+auth-state.json
+.temp-execution-*.js
+*.7z

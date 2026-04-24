@@ -1,10 +1,9 @@
 ---
 name: gsd
-description: Get Shit Done (GSD) - A comprehensive project management system for solo developers using Claude agents
+description: "Get Shit Done (GSD) — structured project management system for solo developers with Claude. Use whenever: user says /gsd, wants to start a new software project, plan or execute a phase, debug systematically, verify phase completion, map a codebase, discuss development methodology (TDD, workflow improvement, phase structure), review or improve the GSD workflow itself, or incorporate insights from external tools (Gemini, GPT, etc.) into the development plan. Also triggers for: 'plan phase', 'execute phase', 'new project', 'map codebase', 'what phase am I on', 'where did I leave off', 'help me plan this feature'."
 version: 1.0.0
 author: GSD Project
 tags: [project-management, agents, workflows, planning, execution]
-triggers: [new project, plan phase, execute phase, map codebase, debug, verify]
 tools: [Read, Write, Edit, Bash, Glob, Grep, Task, AskUserQuestion]
 ---
 
@@ -238,4 +237,4 @@ Each agent, command, and workflow has its own SKILL.md with detailed instruction
 ## Version
 
 GSD Version: 1.0.0
-Last Updated: 2026-01-19
+Last Updated: 2026-04-14

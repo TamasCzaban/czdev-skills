@@ -1,6 +1,6 @@
 ---
 name: playwright-skill
-description: Complete browser automation with Playwright. Auto-detects dev servers, writes clean test scripts to /tmp. Test pages, fill forms, take screenshots, check responsive design, validate UX, test login flows, check links, automate any browser task. Use when user wants to test websites, automate browser interactions, validate web functionality, or perform any browser-based testing.
+description: "Complete browser automation with Playwright. Auto-detects dev servers (including Streamlit on port 8501), writes clean test scripts to /tmp. Test pages, fill forms, take screenshots, check responsive design, validate UX, test login flows, check links, automate any browser task. Use when user wants to test websites, Streamlit apps, React/Next.js frontends, automate browser interactions, validate web functionality, take screenshots for review, or perform any browser-based testing. Also use when the user says 'check if the app works', 'screenshot the page', 'test the login', or 'does this render correctly'."
 ---
 
 **IMPORTANT - Path Resolution:**
@@ -380,6 +380,13 @@ For comprehensive Playwright API documentation, see [API_REFERENCE.md](API_REFER
 - Performance testing
 - Debugging techniques
 - CI/CD integration
+
+## Windows Notes
+
+- Running on Windows (win32) with bash — `/tmp` paths work fine in Git Bash/bash sessions
+- Chromium should launch without issues; if `headless: false` fails, try `headless: true` as fallback
+- Streamlit default port is **8501** — `detectDevServers()` should find it automatically if running
+- If launching a Streamlit app for testing: `cd <project> && streamlit run app.py` in a separate terminal first
 
 ## Tips
 

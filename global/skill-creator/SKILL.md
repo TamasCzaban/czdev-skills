@@ -1,6 +1,6 @@
 ---
 name: skill-creator
-description: Create new skills, modify and improve existing skills, and measure skill performance. Use when users want to create a skill from scratch, edit, or optimize an existing skill, run evals to test a skill, benchmark skill performance with variance analysis, or optimize a skill's description for better triggering accuracy.
+description: "Create, improve, and evaluate skills. Handles the full lifecycle: draft a new skill from scratch, improve an existing skill using feedback or log data, run eval test cases with subagents, grade outputs, show results in the eval viewer for human review, iterate, and run the description optimizer (run_loop.py) to maximize trigger accuracy. Trigger when: user says 'create a skill', 'improve a skill', 'update a skill', 'run evals on a skill', 'optimize skill description', 'test this skill', 'benchmark this skill', 'use log data to improve skills', or describes a workflow they want to capture as a reusable skill."
 ---
 
 # Skill Creator

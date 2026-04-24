@@ -1,6 +1,6 @@
 ---
-name: grill.me
-description: Pre-implementation project interviewer. Trigger this skill whenever the user says "grill me", "/grill.me", "grill.me", or wants to be relentlessly interviewed about a project plan, architecture, or idea before starting. Also trigger when the user says "let's design this together", "interview me about this", "I want to think through this before building", or describes an ambitious project and hasn't locked in specifics. Use this proactively before any significant new project kicks off — its job is to surface every unresolved decision and reach a shared understanding before code is written.
+name: grill-me
+description: "Pre-implementation interviewer and architecture clarifier. Trigger when: user says 'grill me', '/grill-me', 'grill.me'; wants to think through a project/feature/workflow before building; describes an ambiguous design with unresolved decisions; says 'let's design this together', 'interview me about this', 'I want to think through this before building'; is facing a broken architecture/config and needs to reason through root cause and best practice (env setup, auth config, data model confusion); or describes an ambitious multi-step project without locked-in specifics. Use proactively before any significant new project, feature, or workflow. Job: surface every unresolved decision, recommend a position on each, and produce a Decision Summary."
 ---
 
 # grill.me — Pre-Implementation Project Interviewer
