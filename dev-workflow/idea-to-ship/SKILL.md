@@ -126,12 +126,36 @@ If any phase is FAILED or BLOCKED, the pipeline did NOT fully succeed — say so
 
 ## On interruptions
 
-If the user breaks off ("stop", "abort", "hold on"), acknowledge and tell them the exact resume command:
+If the user breaks off ("stop", "abort", "hold on") OR a sub-skill errors mid-flight, acknowledge the stopping point, capture whatever state has been produced so far (`$PRD_ISSUE`, `$SLICE_ISSUES`, phase numbers, last successful sub-phase), and tell the user the **exact** resume command. Be specific — vague advice ("re-run from where it stopped") forces the user to reconstruct context that you already have.
 
-- During Phase 1 (before Gate 1): "Resume with `/idea-to-plan` and paste your original idea."
-- After Gate 1, during idea-to-plan sub-phases: "Resume with the specific sub-skill — see idea-to-plan's own interrupt guidance."
-- After Phase 1, before Gate 2: "Resume with `/gsd-execute <phase-list>` when ready."
-- During Phase 2: "gsd-execute has already started. Completed phases are merged. Resume the remaining ones with `/gsd-execute <remaining phases>`."
+### Phase 1 (`idea-to-plan`) interruptions
+
+| Where it stopped | What's been produced | Resume command |
+|---|---|---|
+| Before Gate 1 (during grill-me) | Nothing committed | `/idea-to-plan` with the original idea |
+| At Gate 1 (Decision Summary shown, awaiting `continue`) | Decision Summary in conversation only | Reply `continue` to this conversation; if context is lost, paste the Decision Summary back and run `/write-a-prd` |
+| Phase 2 mid-run (write-a-prd errored before issue creation) | No `$PRD_ISSUE` yet | `/write-a-prd` — pass the Decision Summary as input |
+| Phase 2 after PRD created, glossary sync failed | `$PRD_ISSUE` exists; glossary may be partial | `/ubiquitous-language` to finish the glossary, then `/prd-to-issues $PRD_ISSUE` |
+| Phase 3 mid-run (some slice issues created, others not) | Partial `$SLICE_ISSUES` list | List the issues already created, then `/prd-to-issues $PRD_ISSUE --resume` (or paste the remaining slices manually) |
+| Phase 4 mid-run (some phases scaffolded, others not) | Partial scaffolding | `/issue-to-gsd <issue-N>` for each unprocessed slice issue, in dependency order |
+
+### Between Phase 1 and Gate 2
+
+- All scaffolding done, awaiting phase-list authorization → `/gsd-execute <phase-list>` when ready. Quote the actual phase numbers from Phase 1's summary.
+
+### Phase 2 (`gsd-execute`) interruptions
+
+`gsd-execute` is **resumable per-phase**. Completed phases are already shipped (PRs merged, branches deleted). Identify which phases are DONE / FAILED / BLOCKED / not-yet-started by reading `.planning/STATE.md` and the GitHub PR list, then:
+
+| Situation | Resume command |
+|---|---|
+| Plan failed for phase NN | `/gsd-execute <NN, NN+1, ...>` (will re-plan from scratch) |
+| Execute failed mid-phase NN (commits on feature branch, no PR) | Inspect the branch, fix the failure, then `bash "$HOME/.claude/skills/gsd/scripts/ship-phase.sh" --phase NN`; afterwards `/gsd-execute <NN+1, NN+2, ...>` for the rest |
+| capture-learnings failed (dirty tree, no LEARNINGS commit) | Re-run `/gsd:capture-learnings <NN>` to land the commit, then ship as above |
+| Ship failed at CI gate (PR open, CI red) | Push fixes to the same feature branch; CI re-runs; `gh pr merge <N> --squash --delete-branch` once green; then `/gsd-execute <remaining>` |
+| Ship hit HITL gate (exit 4) | PR is open and assigned. Reviewer approves and merges manually; `gsd-execute` already continued with later phases |
+
+**Never** retry a fully-shipped phase — re-running ship on a merged PR will corrupt `.planning/STATE.md` with a duplicate entry.
 
 ## Common Rationalizations
 

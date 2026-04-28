@@ -5,6 +5,8 @@ description: Create a PRD through user interview, codebase exploration, and modu
 
 This skill will be invoked when the user wants to create a PRD. You may skip steps if you don't consider them necessary.
 
+**Before step 1:** Read `frontend/Ubiquitous Language.md`. Use only the canonical terms defined there throughout this PRD. If the conversation introduces a term not in the glossary, flag it at the end so the user can formalize it with `/ubiquitous-language`.
+
 1. Ask the user for a long, detailed description of the problem they want to solve and any potential ideas for solutions.
 
 2. Explore the repo to verify their assertions and understand the current state of the codebase.
@@ -13,11 +15,13 @@ This skill will be invoked when the user wants to create a PRD. You may skip ste
 
 4. Sketch out the major modules you will need to build or modify to complete the implementation. Actively look for opportunities to extract deep modules that can be tested in isolation.
 
-A deep module (as opposed to a shallow module) is one which encapsulates a lot of functionality in a simple, testable interface which rarely changes.
+A deep module has a **narrow interface** (few exported functions/hooks, simple call signature) hiding **large internal complexity** (Firestore queries, validation, business rules, transformation logic). Evaluate each module on: interface width vs. hidden complexity ratio — a good module is wide in capability, narrow in surface. Shallow modules (many tiny functions, each doing one thing) leak abstractions and make AI-assisted navigation harder.
 
 Check with the user that these modules match their expectations. Check with the user which modules they want tests written for.
 
 5. Once you have a complete understanding of the problem and solution, use the template below to write the PRD. The PRD should be submitted as a GitHub issue.
+
+**After step 5:** If any terms were used in this conversation that aren't in `frontend/Ubiquitous Language.md`, append a note at the end of the PRD: "**New terms to formalize:** [list]. Run `/ubiquitous-language` to add them to the glossary."
 
 <prd-template>
 

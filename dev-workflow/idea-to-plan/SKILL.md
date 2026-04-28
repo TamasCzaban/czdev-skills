@@ -36,7 +36,7 @@ Do not proceed to Phase 2 until the user says continue (or equivalent).
 
 ## Phase 2 — PRD (write-a-prd)
 
-**Locate the write-a-prd skill** at `.agents/skills/write-a-prd/SKILL.md` within the project.
+**Locate the write-a-prd skill** at `.claude/skills/write-a-prd/SKILL.md` within the project.
 
 **Critical: skip steps 1 and 3** of write-a-prd. The user interview is already done (Phase 1). Jump directly to:
 
@@ -48,13 +48,23 @@ Use the Decision Summary as the source of truth for the problem statement, solut
 
 **Record:** Capture the created PRD issue number as `$PRD_ISSUE`.
 
-**No gate** — after creating the issue, print the URL and proceed immediately to Phase 3.
+**Glossary sync (automatic, no gate):** If the PRD body contains a `**New terms to formalize:**` line — meaning `write-a-prd` flagged domain terms not yet in `frontend/Ubiquitous Language.md` — invoke the `ubiquitous-language` skill (located at `.claude/skills/ubiquitous-language/SKILL.md`) to update the glossary file in the same session. Pass the flagged terms list as input. The skill will read the existing glossary, merge the new terms, rewrite the file, and report a summary inline. After the rewrite:
+
+1. Stage the change: `git add "frontend/Ubiquitous Language.md"`
+2. Commit on the current branch: `git commit -m "docs(glossary): formalize terms from PRD #$PRD_ISSUE"`
+3. Push if a remote tracking branch exists; otherwise leave the commit local — Phase 4's branch creation handles propagation.
+
+If the PRD has no `**New terms to formalize:**` line, skip this step silently — the glossary is already up to date.
+
+Rationale: the glossary is a hard input to every later PRD via `write-a-prd`'s "Before step 1" rule. Letting it drift behind the work means each subsequent PRD relitigates terminology.
+
+**No gate** — after creating the issue and (optionally) updating the glossary, print the URL(s) and proceed immediately to Phase 3.
 
 ---
 
 ## Phase 3 — Slice issues (prd-to-issues)
 
-**Locate the prd-to-issues skill** at `.agents/skills/prd-to-issues/SKILL.md` within the project.
+**Locate the prd-to-issues skill** at `.claude/skills/prd-to-issues/SKILL.md` within the project.
 
 **Skip step 1** — you already have `$PRD_ISSUE` from Phase 2. Pass it directly.
 
@@ -139,6 +149,7 @@ Before declaring the pipeline complete, confirm every item:
 
 - [ ] Phase 1: Decision Summary produced and user approved it explicitly (said "continue" or equivalent)
 - [ ] Phase 2: PRD GitHub issue created — URL printed, `$PRD_ISSUE` recorded
+- [ ] Phase 2: Glossary sync ran if and only if the PRD flagged new terms — either `frontend/Ubiquitous Language.md` was updated and committed, or there was nothing to formalize (silent skip)
 - [ ] Phase 3: All slice issues created in dependency order (blockers first) — issue numbers recorded as `$SLICE_ISSUES`
 - [ ] Phase 3: Each slice issue references `$PRD_ISSUE` as its parent
 - [ ] Phase 4: One feature branch created per slice issue — branch names follow project convention
