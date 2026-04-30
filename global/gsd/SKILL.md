@@ -127,6 +127,16 @@ GSD provides commands for orchestrating the entire project lifecycle:
 - **gsd:update** - Update project state
 - **gsd:whats-new** - Show what's new
 
+### Multi-Agent Pipeline Sub-Skills (Phase 199+ orchestrator architecture)
+
+When these project-scoped skills are present, the dispatcher routes to them for end-to-end phase execution with context isolation via ≤10k JSON subagent handoffs:
+
+- **gsd:run-phase** (`/gsd-run-phase`) - Per-phase pipeline: plan → execute → review → fix-loop → ship. The single module called by both `/gsd-execute` and `/idea-to-ship` orchestrators.
+- **gsd:plan-execute** (`/gsd-plan-execute`) - Bundle plan-phase + execute-phase without the ship step. Executor subagent entry point; emits parseable JSON on completion.
+- **gsd:review-phase** (`/gsd-review-phase`) - Adversarial fresh-context review; writes REVIEW.md + returns JSON verdict (APPROVE / REQUEST_CHANGES / NEEDS_DISCUSSION). Used inside `/gsd-ship-phase`.
+- **gsd:fix-phase** (`/gsd-fix-phase`) - Address reviewer findings; commits fixes to existing feature branch. Runs after a REQUEST_CHANGES verdict.
+- **gsd:ship-phase** (`/gsd-ship-phase`) - Ship with mandatory review gate. Supports `--skip-review` for typo-only / doc-only / lockfile-bump PRs.
+
 ## Workflow Skills
 
 Detailed workflow definitions for complex operations:

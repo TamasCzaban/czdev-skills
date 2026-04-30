@@ -1,6 +1,6 @@
 ---
 name: idea-to-ship
-description: End-to-end pipeline from raw idea to merged, shipped code. Triggers when the user says "idea-to-ship", "/idea-to-ship", "take me from idea all the way to shipped", "one command to plan and ship this whole feature", "full send this feature", or wants grill-me → PRD → issues → GSD phases → plan → execute → capture-learnings → ship with a single invocation. Chains idea-to-plan and gsd-execute. Has exactly two hard gates — the grill-me Decision Summary (inherited from idea-to-plan) and the phase-list confirmation before autonomous execution begins.
+description: End-to-end pipeline from raw idea to merged, shipped code. Triggers when the user says "idea-to-ship", "/idea-to-ship", "take me from idea all the way to shipped", "one command to plan and ship this whole feature", "full send this feature", or wants grill-me → PRD → issues → GSD phases → plan → execute → review → fix → ship with a single invocation. Chains idea-to-plan and a per-phase /gsd-run-phase Agent loop. Has exactly two hard gates — the grill-me Decision Summary (inherited from idea-to-plan) and the phase-list confirmation before autonomous execution begins. Tools: [Agent, Skill, Bash, Glob, Read, Write].
 ---
 
 # idea-to-ship — Full Idea → Shipped Pipeline
@@ -77,16 +77,49 @@ Print the block shown in the Gates section above with real values substituted. W
 
 ---
 
-## Phase 2 — Autonomous execution (gsd-execute)
+## Phase 2 — Resume check + autonomous execution
 
-Invoke the `gsd-execute` skill with the confirmed phase list. It already:
+### Step 2a — Classifier (resume-from-disk)
 
-- Skips blocked phases with a warning
-- Runs `/gsd:plan-phase → /gsd:execute-phase → /gsd:capture-learnings → ship-phase.sh` per phase
-- Handles HITL gates (exit 4) by leaving a PR open with reviewer assigned and continuing with remaining phases
-- Prints a summary table at the end (DONE / AWAITING REVIEW / FAILED / BLOCKED)
+Before spawning any subagent, run `/gsd-classify-state <phases...>` for all confirmed phases. Print the resume table:
 
-Do **not** pass any flags that bypass safety (`--no-wait`, `--skip-tests`). If you feel tempted to, reject the temptation — see Common Rationalizations.
+```
+Phase 28: ✅ DONE (PR #481 merged)
+Phase 29: ⏳ NOT_STARTED
+Phase 30: 🔧 NEEDS_FIX (REVIEW.md REQUEST_CHANGES, 1/2 fix attempts used)
+```
+
+**Auto-proceed** (no user prompt) if all phases are DONE or NOT_STARTED.
+
+**Ask `[Y/n/specific phase]`** if any phase is STARTED_NOT_PLANNED, NEEDS_FIX with ≥1 iteration, or EXECUTED_NOT_REVIEWED. Skip already-DONE phases automatically.
+
+### Step 2b — Per-phase /gsd-run-phase Agent loop
+
+For each phase that is NOT DONE, spawn `/gsd-run-phase <N>` as a subagent via the **`Agent` tool**. Process phases sequentially.
+
+Per-phase subagent prompt (keep ≤2k chars):
+
+```
+You are running the per-phase pipeline for GSD phase <N>. Your job:
+1. Run /gsd-run-phase <N>
+2. Return the JSON block it emits verbatim.
+
+Context pointers (read these yourself):
+- Phase ROADMAP entry: .planning/ROADMAP.md (search "## Phase <N>:")
+- Project conventions: CLAUDE.md files in repo root and .claude/
+
+Return format (JSON, ≤10k):
+{"phase":<N>,"status":"DONE"|"AWAITING_REVIEW"|"FAILED"|"BLOCKED","pr_url":"...","fix_iterations":<n>,"review_verdict":"...","summary_md":"..."}
+```
+
+/gsd-run-phase handles internally: plan → execute → review → fix-loop (≤2 iterations) → ship. The orchestrator (this skill) carries only the JSON return summary per phase.
+
+Accumulate JSON returns into a status table. On `FAILED` or `BLOCKED`:
+- Print `summary_md` from the JSON
+- Dump path to full log (`.planning/phases/<NN>-<slug>/EXEC-LOG.md`) if it exists
+- Continue to next phase (do NOT abort the whole run for one failure)
+
+Do **not** tell the Agent subagent to pass `--no-wait` or `--skip-tests`. If you feel tempted to, reject the temptation — see Common Rationalizations.
 
 ---
 
@@ -103,10 +136,10 @@ Planning:
   Phases:       NN, NN+1, NN+2, ...
 
 Execution (gsd-execute summary):
-  ✅ DONE:            NN, NN+1
+  ✅ DONE:            NN, NN+1 (PR #xxx, #yyy)
   🔍 AWAITING REVIEW: NN+2  → <PR URL>
   ⚠  BLOCKED:         NN+3  → reason: <blocker>
-  ❌ FAILED:          NN+4  → reason: <error>
+  ❌ FAILED:          NN+4  → reason: <error> | log: .planning/phases/NN+4-.../EXEC-LOG.md
 
 Next actions:
   • AWAITING REVIEW phases → ping reviewer / self-review PR
@@ -181,13 +214,14 @@ Before declaring the pipeline complete, confirm every item:
 - [ ] Gate 1: user typed `continue` after the Decision Summary (not assumed).
 - [ ] Phase 1: `$PRD_ISSUE` created, `$SLICE_ISSUES` created in dependency order, all phases scaffolded with feature branches and ROADMAP entries.
 - [ ] Gate 2: user explicitly authorized the phase list (`GO`, subset, or range) — not assumed, not inferred from earlier messages.
-- [ ] Phase 2: `gsd-execute` ran for the authorized phases (no more, no less).
-- [ ] Every DONE phase has a merged PR and a `docs(learnings): phase NN lessons` commit (or `NO_LEARNINGS` was genuine — no commit).
+- [ ] Phase 2: per-phase `/gsd-run-phase <N>` Agent loop ran for the authorized phases (no more, no less).
+- [ ] Every DONE phase has a merged PR; learnings captured inside the subagent (or `NO_LEARNINGS` genuine).
 - [ ] Final summary printed with accurate status per phase, PR URLs for AWAITING REVIEW, and next-actions for non-DONE phases.
 - [ ] If any phase is FAILED or BLOCKED, the report says so explicitly rather than implying full success.
 
 ## Related Skills
 
-- `idea-to-plan` — Phase 1 of this pipeline (itself chains grill-me → write-a-prd → prd-to-issues → issue-to-gsd)
-- `gsd-execute` — Phase 2 of this pipeline (itself chains plan → execute → capture-learnings → ship per phase)
-- `gsd:capture-learnings` — auto-invoked inside gsd-execute; appends non-obvious lessons to `LEARNINGS.md` before each ship
+- `idea-to-plan` — Phase 1 of this pipeline (chains grill-me → PRD subagents → prd-to-issues → issue-to-gsd after Phase 202)
+- `/gsd-run-phase` — Phase 2 per-phase pipeline (spawned as Agent subagent per phase; handles plan → execute → review → fix → ship)
+- `gsd-execute` — standalone multi-phase orchestrator with same Agent-loop pattern as Phase 2 here
+- `gsd:capture-learnings` — auto-invoked inside /gsd-plan-execute; appends non-obvious lessons before ship

@@ -1,0 +1,52 @@
+{
+  "skill_name": "learn",
+  "evals": [
+    {
+      "id": 0,
+      "name": "default-extraction",
+      "prompt": "You are testing the /learn skill's extraction step. Read the SKILL.md provided, focus on its Step 3 brief, then act as the extraction subagent that step describes. The input bundle is at C:/Users/Toma/.claude/skills/learn-workspace/iteration-2/inputs/learn_bundle.md. Project is cz_dev_rag, root C:/Users/Toma/projects/cz_dev_rag, today's date 2026-04-29, user hint is empty (none). Save your output (the JSON or NO_LEARNINGS) to <output_path>. Write only the payload to that file — no preamble, no commentary, no fences.",
+      "hint": "",
+      "assertions": [
+        "Output file exists",
+        "Output is valid JSON or the literal string NO_LEARNINGS",
+        "Output does not start with code fence (```)",
+        "Output does not contain conversational preamble (e.g., 'Here is', 'I have', 'Let me')",
+        "If JSON: has both 'learnings' and 'memory_entries' keys",
+        "Output does not mention RAGAS_LLM_MODEL (env var that does not exist in .env.example or transcripts)",
+        "Output does not mention OLLAMA_NUM_GPU (similar — fabricated knob)",
+        "Output references at least one real session topic (Ragas, OLLAMA, LightRAG, ingestion, BGE-M3, or similar)"
+      ]
+    },
+    {
+      "id": 1,
+      "name": "hinted-extraction",
+      "prompt": "You are testing the /learn skill's extraction step. Read the SKILL.md provided, focus on its Step 3 brief, then act as the extraction subagent that step describes. The input bundle is at C:/Users/Toma/.claude/skills/learn-workspace/iteration-2/inputs/learn_bundle.md. Project is cz_dev_rag, root C:/Users/Toma/projects/cz_dev_rag, today's date 2026-04-29, user hint is 'ragas'. Save your output (the JSON or NO_LEARNINGS) to <output_path>. Write only the payload to that file — no preamble, no commentary, no fences.",
+      "hint": "ragas",
+      "assertions": [
+        "Output file exists",
+        "Output is valid JSON or the literal string NO_LEARNINGS",
+        "Output does not start with code fence (```)",
+        "Output does not contain conversational preamble",
+        "If JSON: has both 'learnings' and 'memory_entries' keys",
+        "Hint bias: at least 60% of LEARNINGS entries mention Ragas (case-insensitive)",
+        "Output does not mention RAGAS_LLM_MODEL"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "dedup-correctness",
+      "prompt": "You are testing the /learn skill's extraction step. Read the SKILL.md provided, focus on its Step 3 brief, then act as the extraction subagent that step describes. The input bundle is at C:/Users/Toma/.claude/skills/learn-workspace/iteration-2/inputs/learn_bundle.md. The bundle's existing LEARNINGS.md already contains an entry titled '2026-04-29 · /learn · OLLAMA_NUM_PARALLEL needs full Ollama restart' and several Ragas Evaluation entries. Project is cz_dev_rag, root C:/Users/Toma/projects/cz_dev_rag, today's date 2026-04-29, user hint is empty (none). Save your output (the JSON or NO_LEARNINGS) to <output_path>. Write only the payload to that file — no preamble, no commentary, no fences.",
+      "hint": "",
+      "assertions": [
+        "Output file exists",
+        "Output is valid JSON or the literal string NO_LEARNINGS",
+        "Output does not start with code fence (```)",
+        "Dedup: no LEARNINGS entry's title contains 'OLLAMA_NUM_PARALLEL' (existing entry covers it)",
+        "Dedup: no LEARNINGS entry's title contains 'EvaluationResult' or '.get()' (existing Ragas Evaluation section covers it)",
+        "Dedup: no LEARNINGS entry's title is about 'singleton' or 'Pydantic' Ragas metrics (existing entry covers it)",
+        "Dedup: no LEARNINGS entry's title mentions 'qwen2.5:32b' 404 (existing entry covers it)",
+        "Output does not mention RAGAS_LLM_MODEL"
+      ]
+    }
+  ]
+}

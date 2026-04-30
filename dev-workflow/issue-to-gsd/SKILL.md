@@ -101,6 +101,16 @@ git checkout -b feature/<issue-N>-<slug>
 
 If the branch already exists, tell the user and ask whether to switch to it or abort.
 
+### 6.5. Rotate completed phases out of ROADMAP.md
+
+Run the archiver before appending the new phase block:
+
+```bash
+node scripts/archive-completed-phases.mjs
+```
+
+It moves any COMPLETE / CANCELLED / DEFERRED blocks from `.planning/ROADMAP.md` into `.planning/ROADMAP-archive.md`, and matching "What's Done" sections from `.planning/STATE.md`. Idempotent — no-op when ROADMAP is already clean. If it reports moved blocks, include `.planning/ROADMAP-archive.md` in the Step 9 commit.
+
 ### 7. Append phase to ROADMAP.md
 
 Append a new phase section at the end of `.planning/ROADMAP.md` following the exact format used in the existing phases. Extract:
@@ -140,7 +150,7 @@ Read `.planning/STATE.md`. Find the parallel tracks table (or create one if miss
 ### 9. Commit the planning files
 
 ```bash
-git add .planning/ROADMAP.md .planning/STATE.md
+git add .planning/ROADMAP.md .planning/ROADMAP-archive.md .planning/STATE.md
 git commit -m "plan(<NN>): scaffold phase from issue #<issue-N>"
 ```
 
@@ -167,5 +177,5 @@ Next steps:
 
 - **One issue = one phase = one branch.** Never put two issues in the same phase.
 - **Phase numbers are per-branch.** If both Tamas and Zsombor run this at the same time, they may pick the same phase number. On merge, simply renumber one phase. The ROADMAP.md append is clean and easy to resolve.
-- **Do not modify any source files.** This skill only touches `.planning/ROADMAP.md`, `.planning/STATE.md`, and creates a git branch. All source changes happen during GSD execution.
+- **Do not modify any source files.** This skill only touches `.planning/ROADMAP.md`, `.planning/ROADMAP-archive.md`, `.planning/STATE.md`, and creates a git branch. Historical phase detail lives in `.planning/ROADMAP-archive.md`. All source changes happen during GSD execution.
 - **Do not run gsd:plan-phase yourself.** Always ask the user to run it. The planner needs fresh context about the codebase and should be run interactively.

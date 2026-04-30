@@ -1,15 +1,14 @@
 ---
 name: gsd-execute
-description: "Meta pipeline: plan → execute → ship for one or more phases in sequence. Trigger when: user says /gsd-execute, /gsd execute, 'plan execute and ship phases X Y Z', 'run phases X through Y', 'do phases X Y Z end to end'. Parses a phase list, skips blocked phases, and runs the full plan→execute→ship pipeline for each unblocked phase in order."
-version: 1.0.0
+description: "Meta pipeline: plan → execute → review → fix → ship for one or more phases in sequence. Trigger when: user says /gsd-execute, /gsd execute, 'plan execute and ship phases X Y Z', 'run phases X through Y', 'do phases X Y Z end to end'. Parses a phase list, skips blocked phases, and for each unblocked phase spawns /gsd-run-phase as a subagent via the Agent tool. Orchestrator only sees compact JSON returns (≤10k each); full plan/execute/review transcripts live on disk."
+version: 2.0.0
 triggers: [/gsd-execute, gsd execute, plan execute ship, run phases end to end]
 tools: [Bash, Glob, Grep, Read, Write, Agent, Skill]
 ---
 
-# gsd-execute — Plan → Execute → Ship Pipeline
+# gsd-execute — Plan → Execute → Review → Ship Pipeline
 
-Runs the full `plan-phase → execute-phase → ship` cycle for a list of phases.
-Skips blocked phases, handles HITL gates gracefully, and reports a summary at the end.
+Runs the full per-phase pipeline for a list of GSD phases by spawning `/gsd-run-phase <N>` as a subagent for each phase. The orchestrator carries only compact JSON status summaries (≤10k per phase) — it never holds plan content, execute traces, or review findings in its context.
 
 ## Invocation
 
@@ -31,86 +30,131 @@ Examples:
 Read `.planning/ROADMAP.md` to confirm each phase exists. If a phase number is not
 found in the roadmap, warn and skip it — do not abort the whole run.
 
-## Step 1 — Blocker check
+## Step 1 — Classifier (resume-from-disk)
 
-For each phase, scan its ROADMAP.md entry for any of these signals:
+For each phase in the validated list, classify its current state using the classifier
+skill `/gsd-classify-state <N>` (if available) or by inspecting disk + git + gh directly:
+
+| Branch state | PR state | REVIEW.md | Classification |
+|---|---|---|---|
+| no branch | — | — | NOT_STARTED |
+| exists, no PLAN.md | — | — | STARTED_NOT_PLANNED |
+| exists, has PLAN.md, no commits | — | — | PLANNED_NOT_EXECUTED |
+| exists, has commits | none | none | EXECUTED_NOT_REVIEWED |
+| exists, has commits | none | exists, REQUEST_CHANGES | NEEDS_FIX |
+| exists, has commits | open, CI red | — | AWAITING_REVIEW (CI fail) |
+| exists, has commits | open, CI green | — | READY_TO_MERGE |
+| — | merged | — | DONE |
+
+Print the resume table:
+
+```
+Phase 28: ✅ DONE (PR #481 merged)
+Phase 29: ⏳ NOT_STARTED
+Phase 30: 🔧 NEEDS_FIX (REVIEW.md exit 5, 1/2 fix attempts used)
+Phase 31: ⏳ NOT_STARTED
+```
+
+**Auto-resume** (no user prompt) if all phases are DONE or NOT_STARTED.
+
+**Explicit confirmation** (ask `[Y/n/specific phase]`) if any phase has ambiguous state:
+- Branch exists with uncommitted changes
+- Phase in STARTED_NOT_PLANNED state
+- Phase in NEEDS_FIX with ≥1 fix iteration already used
+- Phase numbering jumps unexpectedly
+
+## Step 2 — Blocker check
+
+For each NOT_STARTED or EXECUTED_NOT_REVIEWED phase, scan its ROADMAP.md entry for:
 - `Status: Blocked` or `blocked by #N`
-- `Depends on: <phase>` where that dependency phase is not yet in STATE.md as shipped
+- `Depends on: <phase>` where that dependency phase is not yet shipped
 - `⛔` or `🚧` emoji in the phase title
 
 If a phase is blocked: print `⚠ Phase NN blocked — skipping` and remove it from
 the run queue. Continue with the remaining phases.
 
-If **all** phases are blocked: stop here and tell the user which blockers exist.
+If **all** phases are blocked: stop and tell the user which blockers exist.
 
-## Step 2 — For each unblocked phase, run the full pipeline
+**Dynamic re-evaluation:** After each phase reaches DONE, re-check any SKIPPED phases.
+If a skipped phase was blocked only by the just-shipped phase, add it back to the end
+of the run queue.
 
-Process phases **sequentially** (each phase may depend on the previous one's output).
+## Step 3 — Per-phase: spawn /gsd-run-phase
 
-For each phase `N` in the queue:
+Process phases **sequentially** (each may depend on the previous one's output).
 
-### 2a. Plan
-```
-/gsd:plan-phase N
-```
-- Wait for the plan to complete and PLAN.md to be written.
-- If planning fails (no PLAN.md produced, planner errors): mark phase N as FAILED,
-  skip execute + ship for it, continue to next phase.
+For each phase `N` in the run queue:
 
-### 2b. Execute
-```
-/gsd:execute-phase N
-```
-- Run all waves to completion.
-- `execute-phase` now **automatically invokes `/gsd:capture-learnings N` as its step 7**, before its internal ship step. No action needed here; just be aware a `docs(learnings): phase N lessons` commit may land on the feature branch.
-- If execution fails: mark phase N as FAILED, do not attempt ship, continue.
-- If capture-learnings fails: execute-phase will report it and NOT ship. Mark phase N as FAILED (capture), continue to next phase.
+Print: `\n━━━ Phase N — Starting pipeline ━━━`
 
-### 2c. Ship
-```
-bash "$HOME/.claude/skills/gsd/scripts/ship-phase.sh" --phase N
-```
-
-Handle exit codes:
-- **0** → shipped. Mark phase N as DONE. Continue to next phase.
-- **1** (test failure) → mark FAILED. Print the failing test output. Continue.
-- **2** (CI failure) → mark FAILED. Print CI link. Continue.
-- **3** (preflight failure) → mark FAILED. Explain (dirty tree, wrong branch, etc.). Continue.
-- **4** (HITL gate) → mark AWAITING REVIEW. Print: `🔍 Phase NN requires human review — PR is open, reviewer assigned. Continuing with remaining phases.` Continue.
-
-## Step 3 — Summary report
-
-After all phases have been processed, print a compact table:
+Spawn `/gsd-run-phase <N>` via the **`Agent` tool**. Prompt (keep ≤2k chars):
 
 ```
-┌─────────┬──────────────────────────────┬─────────────────────┐
-│ Phase   │ Title                        │ Status              │
-├─────────┼──────────────────────────────┼─────────────────────┤
-│ 28      │ Remove Facebook OAuth/CSP    │ ✅ DONE             │
-│ 29      │ Settings UX polish           │ ✅ DONE             │
-│ 30      │ Audit log UI                 │ 🔍 AWAITING REVIEW  │
-│ 31      │ Stripe webhook hardening     │ ⚠ BLOCKED           │
-└─────────┴──────────────────────────────┴─────────────────────┘
+You are running the per-phase pipeline for GSD phase <N>. Your job:
+1. Run /gsd-run-phase <N>
+2. Return the JSON block it emits verbatim.
+
+Context pointers (read these yourself):
+- Phase ROADMAP entry: .planning/ROADMAP.md (search "## Phase <N>:")
+- Project conventions: CLAUDE.md files in repo root and .claude/
+
+Return format (JSON, ≤10k):
+{"phase":<N>,"status":"DONE"|"AWAITING_REVIEW"|"FAILED"|"BLOCKED","pr_url":"...","fix_iterations":<n>,"review_verdict":"...","summary_md":"..."}
 ```
 
-Then print any follow-up actions needed:
-- For AWAITING REVIEW phases: list the PR URL and what the reviewer must check
-- For FAILED phases: list the error and recommended next step
-- For BLOCKED phases: list what unblocks them
+Wait for the return. Parse JSON. Handle:
+
+| `status` | Action |
+|---|---|
+| `DONE` | Mark phase DONE. Continue to next phase. Dynamic re-eval of skipped phases. |
+| `AWAITING_REVIEW` | Mark AWAITING_REVIEW. Print `summary_md` + next-step instructions. Continue to next phase. |
+| `FAILED` | Mark FAILED. Dump last 2k of subagent output + log path. Ask user: `[s]kip and continue / [a]bort run`. Default: skip and continue after 30s. |
+| `BLOCKED` | Mark BLOCKED. Continue to next phase. |
+
+**On subagent failure / no JSON returned:**
+
+```
+⚠ Phase <N> — subagent returned no parseable JSON.
+Last 2k of output: <tail of subagent stdout>
+Full log: .planning/phases/<NN>-<slug>/EXEC-LOG.md (if it exists)
+Direction: [s]kip and continue / [a]bort / inspect manually
+```
+
+Wait for input. Default to skip after 30 seconds.
+
+## Step 4 — Summary report
+
+After all phases have been processed:
+
+```
+┌─────────┬──────────────────────────────────────────┬─────────────────────┐
+│ Phase   │ Title                                    │ Status              │
+├─────────┼──────────────────────────────────────────┼─────────────────────┤
+│ 28      │ Remove Facebook OAuth/CSP                │ ✅ DONE (PR #481)   │
+│ 29      │ Settings UX polish                       │ ✅ DONE (PR #482)   │
+│ 30      │ Audit log UI                             │ 🔍 AWAITING REVIEW  │
+│ 31      │ Stripe webhook hardening                 │ ⚠ BLOCKED           │
+└─────────┴──────────────────────────────────────────┴─────────────────────┘
+```
+
+Then print any follow-up actions:
+- For AWAITING_REVIEW phases: PR URL + what reviewer must check
+- For FAILED phases: error summary + recommended next step
+- For BLOCKED phases: what unblocks them
 
 ## Rules
 
-- Never run `git merge` directly — the ship script handles all git operations via PR.
+- Never run `git merge` directly — /gsd-run-phase handles all git operations via PR.
 - Never skip the ship step — a phase with local commits but no merged PR is not done.
-- If the ship script is missing: fall back to the manual flow in
-  `~/.claude/skills/gsd/references/git-integration/SKILL.md` but warn the user.
 - HITL gate = stop shipping that phase, NOT the whole run. Other phases continue.
-- After the run, update `.planning/STATE.md` for any phase not already updated by
-  the ship script (e.g., FAILED phases need a failure note).
+- After the run, update `.planning/STATE.md` for any phase not already updated by the ship script.
+- Do NOT pass `--no-wait` or `--skip-tests` to underlying skills unless the user explicitly requested speed over safety.
 
 ## Related Skills
 
-@skills/gsd/commands/plan-phase — Plans a single phase
-@skills/gsd/commands/execute-phase — Executes a single phase (includes ship step)
-@skills/gsd/scripts/ship-phase.sh — Automated PR + merge + cleanup script
-@skills/gsd/references/git-integration — Manual ship fallback
+- `/gsd-run-phase` — per-phase pipeline (spawned as subagent per phase)
+- `/gsd-plan-execute` — executor subagent (spawned inside /gsd-run-phase)
+- `/gsd-review-phase` — reviewer subagent (spawned inside /gsd-run-phase)
+- `/gsd-fix-phase` — fixer subagent (spawned inside /gsd-run-phase fix loop)
+- `/gsd-ship-phase` — ship step (invoked inside /gsd-run-phase)
+- `/gsd-classify-state` — resume-from-disk classifier (Step 1)

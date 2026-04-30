@@ -7,18 +7,29 @@
 #   bash "$HOME/.claude/skills/gsd/scripts/ship-phase.sh" --phase <N> [options]
 #
 # Options:
-#   --phase <N>      Phase number (required; used to find PLAN.md and ROADMAP entry)
-#   --base <branch>  Integration branch to PR against (default: dev)
-#   --no-wait        Skip CI polling; merge immediately after push (dangerous — warn)
-#   --skip-tests     Bypass local test gate (emergency only)
-#   --dry-run        Print every command without executing
+#   --phase <N>          Phase number (required; used to find PLAN.md and ROADMAP entry)
+#   --base <branch>      Integration branch to PR against (default: dev)
+#   --no-wait            Skip CI polling; merge immediately after push (dangerous — warn)
+#   --skip-tests         Bypass local test gate (emergency only)
+#   --dry-run            Print every command without executing
+#   --stop-after-tests   Run preflight + HITL gate + tests, then exit 0 before pushing.
+#                        Used by /gsd-ship-phase as the first half of the pipeline so a
+#                        reviewer subagent can run between tests and push. Mutually
+#                        exclusive with --from-push.
+#   --from-push          Skip HITL gate detection and tests; jump straight to push.
+#                        Caller MUST have already run preflight + tests (e.g. via a
+#                        prior --stop-after-tests invocation). Preflight (branch +
+#                        dirty-tree checks) still runs as a safety net. Mutually
+#                        exclusive with --stop-after-tests.
 #
 # Exit codes:
-#   0  shipped successfully
+#   0  shipped successfully (or --stop-after-tests stage gate reached)
 #   1  test failure
 #   2  CI failure
-#   3  preflight failure
+#   3  preflight failure (or invalid flag combination)
 #   4  user abort (HITL gate detected)
+#   5  reviewer verdict REQUEST_CHANGES   (emitted by /gsd-ship-phase, not this script)
+#   6  reviewer verdict NEEDS_DISCUSSION  (emitted by /gsd-ship-phase, not this script)
 
 set -euo pipefail
 
@@ -35,18 +46,27 @@ BASE="dev"
 NO_WAIT=false
 SKIP_TESTS=false
 DRY_RUN=false
+STOP_AFTER_TESTS=false
+FROM_PUSH=false
 TEST_LOG="/tmp/ship-phase-tests.log"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --phase)    PHASE="$2"; shift 2 ;;
-    --base)     BASE="$2"; shift 2 ;;
-    --no-wait)  NO_WAIT=true; shift ;;
-    --skip-tests) SKIP_TESTS=true; shift ;;
-    --dry-run)  DRY_RUN=true; shift ;;
+    --phase)             PHASE="$2"; shift 2 ;;
+    --base)              BASE="$2"; shift 2 ;;
+    --no-wait)           NO_WAIT=true; shift ;;
+    --skip-tests)        SKIP_TESTS=true; shift ;;
+    --dry-run)           DRY_RUN=true; shift ;;
+    --stop-after-tests)  STOP_AFTER_TESTS=true; shift ;;
+    --from-push)         FROM_PUSH=true; shift ;;
     *) die 3 "Unknown flag: $1" ;;
   esac
 done
+
+# Mutual exclusivity: stage flags cannot both be on
+if $STOP_AFTER_TESTS && $FROM_PUSH; then
+  die 3 "--stop-after-tests and --from-push are mutually exclusive."
+fi
 
 # Dry-run wrapper — prints without executing
 run() {
@@ -98,21 +118,29 @@ ok "Preflight passed. Branch: $CURRENT_BRANCH → $BASE | Phase: $PHASE_PAD"
 $DRY_RUN && warn "DRY RUN — no commands will execute."
 
 # ─── HITL gate detection ────────────────────────────────────────────────────
-info "Checking for HITL gates…"
-
 HITL_FOUND=false
 HITL_REASONS=()
 
+# PLAN_FILE lookup is needed by both HITL detection AND the PR body builder
+# below, so always resolve it. HITL detection itself is skipped when --from-push
+# is set (caller already cleared the gate before invoking the second half).
 PLAN_FILE=$(find .planning/phases -name "*PLAN.md" 2>/dev/null | grep -E "/${PHASE_PAD}[^/]*/" | head -1 || true)
-if [[ -n "$PLAN_FILE" ]] && grep -qiE "(HITL|human.in.the.loop|needs.review)" "$PLAN_FILE" 2>/dev/null; then
-  HITL_FOUND=true
-  HITL_REASONS+=("HITL flag in $PLAN_FILE")
-fi
 
-# Check open issues with Status: Needs Review label linked to this phase
-# (light check — full label check happens after issue extraction below)
-if [[ -z "$PLAN_FILE" ]]; then
-  warn "No PLAN.md found for phase $PHASE_PAD — skipping file-based HITL check."
+if $FROM_PUSH; then
+  info "Skipping HITL gate detection (--from-push: caller cleared the gate)."
+else
+  info "Checking for HITL gates…"
+
+  if [[ -n "$PLAN_FILE" ]] && grep -qiE "(HITL|human.in.the.loop|needs.review)" "$PLAN_FILE" 2>/dev/null; then
+    HITL_FOUND=true
+    HITL_REASONS+=("HITL flag in $PLAN_FILE")
+  fi
+
+  # Check open issues with Status: Needs Review label linked to this phase
+  # (light check — full label check happens after issue extraction below)
+  if [[ -z "$PLAN_FILE" ]]; then
+    warn "No PLAN.md found for phase $PHASE_PAD — skipping file-based HITL check."
+  fi
 fi
 
 # ─── extract linked GitHub issues ───────────────────────────────────────────
@@ -143,7 +171,16 @@ if [[ -f "$ROADMAP_FILE" ]]; then
            | grep -i "GitHub Issue" | _extract_issue_nums)
 fi
 
-# Source 2: commit messages on this branch — #N / Fixes #N / Closes #N
+# Source 2: ROADMAP.md — find phase block by current branch name (handles
+# feature/51-slug branches where phase NN ≠ issue 51)
+if [[ -f "$ROADMAP_FILE" ]]; then
+  while IFS= read -r num; do
+    LINKED_ISSUES+=("$num")
+  done < <(grep -B10 -E "Branch.*${CURRENT_BRANCH}($|[^-])" "$ROADMAP_FILE" 2>/dev/null \
+           | grep -i "GitHub Issue" | _extract_issue_nums)
+fi
+
+# Source 3: commit messages on this branch — #N / Fixes #N / Closes #N
 while IFS= read -r num; do
   LINKED_ISSUES+=("$num")
 done < <(git log "origin/$BASE..HEAD" --pretty=format:"%s %b" 2>/dev/null \
@@ -155,20 +192,23 @@ unset IFS
 
 if [[ ${#LINKED_ISSUES[@]} -gt 0 ]]; then
   ok "Linked issues: ${LINKED_ISSUES[*]/#/#}"
-  # Check if any linked issue has 'Needs Review' label
-  for iss in "${LINKED_ISSUES[@]}"; do
-    LABELS=$(gh issue view "$iss" --json labels --jq '.labels[].name' 2>/dev/null || true)
-    if echo "$LABELS" | grep -qi "needs.review\|needs-review"; then
-      HITL_FOUND=true
-      HITL_REASONS+=("Issue #$iss has 'Needs Review' label")
-    fi
-  done
+  # Check if any linked issue has 'Needs Review' label (skipped on --from-push:
+  # caller already cleared the HITL gate before invoking the push half).
+  if ! $FROM_PUSH; then
+    for iss in "${LINKED_ISSUES[@]}"; do
+      LABELS=$(gh issue view "$iss" --json labels --jq '.labels[].name' 2>/dev/null || true)
+      if echo "$LABELS" | grep -qi "needs.review\|needs-review"; then
+        HITL_FOUND=true
+        HITL_REASONS+=("Issue #$iss has 'Needs Review' label")
+      fi
+    done
+  fi
 else
   warn "No linked GitHub issues found. PR will have no Closes #N lines."
 fi
 
-# HITL gate: stop here if human review is required
-if $HITL_FOUND; then
+# HITL gate: stop here if human review is required (skipped on --from-push)
+if ! $FROM_PUSH && $HITL_FOUND; then
   warn "HITL gate(s) detected — cannot auto-merge:"
   for reason in "${HITL_REASONS[@]}"; do
     warn "  • $reason"
@@ -186,7 +226,9 @@ if $HITL_FOUND; then
 fi
 
 # ─── local tests ────────────────────────────────────────────────────────────
-if $SKIP_TESTS; then
+if $FROM_PUSH; then
+  info "Skipping local tests (--from-push: caller already ran them)."
+elif $SKIP_TESTS; then
   warn "SKIP_TESTS set — bypassing local test gate."
 else
   info "Running local tests…"
@@ -238,6 +280,12 @@ else
   fi
 
   ok "All local tests passed."
+fi
+
+# ─── stage gate ─────────────────────────────────────────────────────────────
+if $STOP_AFTER_TESTS; then
+  ok "✅ Preflight + tests OK — stopping at stage gate (--stop-after-tests)."
+  exit 0
 fi
 
 # ─── push branch ────────────────────────────────────────────────────────────
@@ -316,6 +364,14 @@ run gh pr merge "$PR_NUM" --squash --delete-branch
 info "Switching to $BASE and pulling…"
 run git checkout "$BASE"
 run git pull --ff-only
+
+# Delete local feature branch (remote already gone via --delete-branch above)
+if [[ "$CURRENT_BRANCH" != "$BASE" ]]; then
+  info "Deleting local branch $CURRENT_BRANCH…"
+  run git branch -d "$CURRENT_BRANCH" 2>/dev/null \
+    || run git branch -D "$CURRENT_BRANCH" 2>/dev/null \
+    || warn "Could not delete local branch $CURRENT_BRANCH — delete manually with: git branch -D $CURRENT_BRANCH"
+fi
 
 # Close linked issues (safety net — 'Closes #N' in PR body handles the common
 # case on merge, but if the repo has that feature disabled this ensures closure)

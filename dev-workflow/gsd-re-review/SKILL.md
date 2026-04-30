@@ -1,6 +1,6 @@
 ---
-name: gsd-review
-description: Independent code review by a fresh-context sub-agent. Runs after /gsd:execute-phase and before opening a PR. Triggers when the user says "/gsd-review", "review this phase", "review the diff", "get a second opinion on this branch", or wants an unbiased review of work-in-progress before pushing.
+name: gsd:re-review
+description: Ad-hoc independent code review by a fresh-context sub-agent. Use this for post-merge second opinions, spot-checks on branches that bypassed the automated review gate (--skip-review), or re-reviewing after manual fixes. For the automated review gate inside the ship pipeline, use /gsd-review-phase instead. Triggers when the user says "/gsd-re-review", "/gsd:re-review", "ad-hoc review", "re-review this branch", or "get a second opinion after merge".
 ---
 
 # GSD Review — Independent Phase Review
@@ -161,7 +161,7 @@ Full review: <path to REVIEW.md>
 
 Next steps:
   - If APPROVE: gh pr create --base <BASE> --title "..." --body "Closes #<ISSUE_N>"
-  - If REQUEST_CHANGES: address findings, then re-run /gsd-review
+  - If REQUEST_CHANGES: address findings, then re-run /gsd:re-review
   - If NEEDS_DISCUSSION: read the questions section, decide, then proceed
 ```
 

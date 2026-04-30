@@ -1,0 +1,44 @@
+{
+  "skill_name": "gsd-execute",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Run /gsd-execute 5 for a project whose .planning/ROADMAP.md contains:\n\n## Phase 05 — Auth Setup\nStatus: Pending\nGoal: Implement email/password authentication with Firebase Auth.\n\nDescribe in detail the full sequence of steps you will take to execute phase 5, including the exact sub-commands you will invoke in order.",
+      "expected_output": "Agent describes or starts the sequence: (1) read ROADMAP.md to confirm phase 5 exists, (2) check for blockers, (3) run /gsd:plan-phase 5, (4) run /gsd:execute-phase 5 (which includes capture-learnings as its internal step 7), (5) run ship-phase.sh --phase 5. Each step must happen in this order, no steps skipped.",
+      "files": [],
+      "assertions": [
+        "Agent reads .planning/ROADMAP.md first to validate the phase",
+        "Agent runs /gsd:plan-phase 5 before /gsd:execute-phase 5",
+        "Agent runs /gsd:execute-phase 5 before the ship step",
+        "Agent runs ship-phase.sh --phase 5 (or describes doing so) as the final step",
+        "Agent does not skip the ship step"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Run /gsd-execute 5, 6, 7 for a project whose .planning/ROADMAP.md contains:\n\n## Phase 05 — Remove Facebook OAuth\nStatus: Pending\n\n## Phase 06 — Settings UX Polish\nStatus: Blocked by #5 (phase 5 must ship before this can start)\n\n## Phase 07 — Audit Log UI\nStatus: Pending\n\nDescribe what happens to each phase.",
+      "expected_output": "Phase 5: runs full pipeline (plan → execute → ship). Phase 6: skipped with a warning message ('⚠ Phase 06 blocked — skipping' or similar). Phase 7: runs full pipeline. The overall run does NOT abort because of the blocked phase.",
+      "files": [],
+      "assertions": [
+        "Phase 6 is skipped with an explicit warning message",
+        "Phase 5 is run (not skipped)",
+        "Phase 7 is run (not skipped)",
+        "The run does not abort when it encounters the blocked phase — it continues with 5 and 7",
+        "The final summary table shows phase 6 as BLOCKED"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "You are mid-run of /gsd-execute 9, 10. Phase 9's ship-phase.sh returned exit code 4. What does exit code 4 mean according to the gsd-execute protocol, and what is the exact behavior for this phase and for phase 10?",
+      "expected_output": "Exit code 4 is the HITL (human-in-the-loop) gate. Phase 9 is marked AWAITING REVIEW (not FAILED, not DONE). A PR is left open with a reviewer assigned. The run continues — phase 10 is processed normally. The final summary shows phase 9 as AWAITING REVIEW with the PR URL, and the user is instructed to review/merge that PR manually.",
+      "files": [],
+      "assertions": [
+        "Agent correctly identifies exit code 4 as HITL gate",
+        "Phase 9 is marked AWAITING REVIEW (not FAILED or DONE)",
+        "The run does NOT abort — phase 10 continues processing",
+        "Agent states the PR is left open with reviewer assigned",
+        "Final summary includes phase 9 as AWAITING REVIEW with follow-up instructions"
+      ]
+    }
+  ]
+}
