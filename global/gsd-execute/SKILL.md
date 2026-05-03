@@ -13,22 +13,31 @@ Runs the full per-phase pipeline for a list of GSD phases by spawning `/gsd-run-
 ## Invocation
 
 ```
-/gsd-execute 28, 29, 30
-/gsd-execute 28-30
-/gsd-execute 28 29 30
+/gsd-execute 28, 29, 30          # phase numbers (existing scaffolds)
+/gsd-execute 28-30               # phase number range
+/gsd-execute 591 592 593         # GitHub issue numbers (from /idea-to-plan)
 ```
 
-## Step 0 — Parse & validate the phase list
+The args may be either GSD phase numbers (already scaffolded in `.planning/ROADMAP.md`) OR raw GitHub issue numbers fresh out of `/idea-to-plan`. The skill disambiguates each input automatically — you never need to flag which kind they are.
 
-Extract all phase numbers from the args. Accept any separator (comma, space, dash range).
+## Step 0 — Parse, classify, and scaffold
 
-Examples:
+Extract all numbers from the args. Accept any separator (comma, space, dash range). Examples:
 - `28, 29, 30` → [28, 29, 30]
 - `28-30` → [28, 29, 30]
-- `28 30` → [28, 30]
+- `591 592 593` → [591, 592, 593]
 
-Read `.planning/ROADMAP.md` to confirm each phase exists. If a phase number is not
-found in the roadmap, warn and skip it — do not abort the whole run.
+For each number `N`, classify it:
+
+1. **Phase number?** Check `.planning/ROADMAP.md` for a `## Phase N:` heading. If present → already scaffolded, continue.
+2. **Issue number?** Run `gh issue view <N> --json number,state` (cheap call). If the issue exists → it's an unscaffolded slice from `/idea-to-plan`.
+3. **Neither?** Print `⚠ <N> not found as phase or GitHub issue — skipping` and drop it.
+
+For each input classified as an unscaffolded issue, invoke the **`issue-to-gsd`** skill via the `Skill` tool — pass the issue number. `issue-to-gsd` creates the feature branch, appends a phase entry to `.planning/ROADMAP.md`, updates `.planning/STATE.md`, and commits the planning files. Run these scaffolding calls **sequentially** (issue-to-gsd writes to ROADMAP.md, so parallel calls would race on phase numbering). After each call returns, capture the new phase number from the resulting ROADMAP entry — that is what the rest of this skill operates on.
+
+Why scaffolding lives here, not in `/idea-to-plan`: `/idea-to-plan` produces GitHub issues that may sit on the board for days or weeks before someone starts work. Creating branches at planning time means the repo accumulates branches for work that may never start (or get re-prioritised). Branches are cheap if created lazily at execution start, and the repo stays clean.
+
+After Step 0, the run queue contains only resolved phase numbers, all of which now have ROADMAP entries and feature branches.
 
 ## Step 1 — Classifier (resume-from-disk)
 

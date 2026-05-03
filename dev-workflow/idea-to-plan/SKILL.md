@@ -1,23 +1,27 @@
 ---
 name: idea-to-plan
-description: Full pipeline from raw idea to actionable GSD plan with GitHub tracking. Triggers when the user says "idea-to-plan", "/idea-to-plan", "let's kick off a new feature", "I have an idea I want to build out", "take me through the full planning pipeline", or wants to go from idea → PRD → issues → GSD phases in one session. Phase 1 (grill-me Decision Summary) has a user gate. Phase 2 (write-a-prd) runs inside an Opus PRD-writer subagent (high-reasoning translation from Decision Summary to formal PRD). Phases 3-4 (prd-to-issues + issue-to-gsd) run inside a Sonnet slicer-scaffolder subagent (mechanical decomposition). Glossary updates are batched into a single commit at the end. Tools: [Agent, Skill, Bash, Glob, Read, Write].
+description: Full pipeline from raw idea to a board of grabbable GitHub slice issues. Triggers when the user says "idea-to-plan", "/idea-to-plan", "let's kick off a new feature", "I have an idea I want to build out", "take me through the full planning pipeline", or wants to go from idea → PRD → grabbable GitHub issues in one session. Phase 1 (grill-me Decision Summary) has a user gate. Phase 2 (write-a-prd) runs inside an Opus PRD-writer subagent (high-reasoning translation from Decision Summary to formal PRD). Phase 3 (prd-to-issues) runs inside a Sonnet slicer subagent (mechanical decomposition into vertical slices). Glossary updates are batched into a single commit at the end. Stops once slice issues are on GitHub — GSD phase scaffolding and feature branch creation happen later, lazily, when /gsd-execute starts work on them. Tools: [Agent, Skill, Bash, Glob, Read, Write].
 ---
 
 # idea-to-plan — Full Feature Planning Pipeline
 
-You are orchestrating a four-phase pipeline that takes a raw idea all the way to GSD-ready execution phases. **Only Phase 1 has a hard gate** — once the user approves the Decision Summary, Phase 2 (PRD-writer subagent on Opus) and Phases 3-4 (slicer-scaffolder subagent on Sonnet) run automatically without pausing for confirmation.
+You are orchestrating a three-phase pipeline that takes a raw idea all the way to a board of independently-grabbable GitHub slice issues. **Only Phase 1 has a hard gate** — once the user approves the Decision Summary, Phase 2 (PRD-writer subagent on Opus) and Phase 3 (slicer subagent on Sonnet) run automatically without pausing for confirmation.
+
+This skill stops at slice issues on purpose: branches, ROADMAP entries, and STATE.md scaffolding all happen later in `/gsd-execute`'s Step 0, when work actually begins. That keeps the repo clean of branches for work that may sit on the board for days, weeks, or never start at all.
 
 ## Phase overview
 
 ```
 Phase 1: grill-me       → Decision Summary  [GATE — user says "continue"]   (orchestrator: Opus)
 Phase 2: write-a-prd    → PRD GitHub issue   PRD-writer subagent (Opus, fresh context)
-Phase 3: prd-to-issues  → Vertical slices    ↑  Slicer-scaffolder subagent
-Phase 4: issue-to-gsd   → GSD phases         ↓  (Sonnet, fresh context)
+Phase 3: prd-to-issues  → Vertical slice issues  Slicer subagent (Sonnet, fresh context)
                         + Glossary batch commit (if new_terms non-empty)
+
+→ Hand off to /gsd-execute <issue-N> <issue-M> ... when ready to start work.
+  (gsd-execute scaffolds GSD phases + branches lazily via issue-to-gsd.)
 ```
 
-**Two-tier subagent split** (since the post-Phase-205 model alignment): write-a-prd is reasoning-heavy (translating a high-level Decision Summary into a self-contained PRD with 20+ user stories, deep-module sketch, edge cases, testing decisions, codebase reconciliation) — run on **Opus**. prd-to-issues and issue-to-gsd are mechanical decomposition (PRD → vertical slices → branches + ROADMAP entries) — run on **Sonnet**. The split prevents Opus from doing tedious GitHub scaffolding while keeping the high-leverage conceptual work on the strongest model.
+**Two-tier subagent split** (since the post-Phase-205 model alignment): write-a-prd is reasoning-heavy (translating a high-level Decision Summary into a self-contained PRD with 20+ user stories, deep-module sketch, edge cases, testing decisions, codebase reconciliation) — run on **Opus**. prd-to-issues is mechanical decomposition (PRD → vertical slices) — run on **Sonnet**. The split prevents Opus from doing tedious GitHub scaffolding while keeping the high-leverage conceptual work on the strongest model.
 
 Flags:
 - `--parallel` — spawn all per-feature PRD pipelines concurrently (multi-feature ideas only). Each pipeline is still two subagents internally.
@@ -51,11 +55,11 @@ If phases for this feature already exist in ROADMAP.md:
 
 Auto-proceed to Stage 1 spawning (no prompt) if no classifier hit (phases not yet in ROADMAP).
 
-## Phase 2-4 — Two-stage subagent pipeline (per feature)
+## Phase 2-3 — Two-stage subagent pipeline (per feature)
 
-After the user approves the Decision Summary (and classifier confirms no prior scaffold exists), identify the features to build from the Decision Summary. In most cases this is a single feature → one PRD-writer + one slicer-scaffolder, run sequentially. Multi-feature ideas produce multiple per-feature pipelines (each still two subagents).
+After the user approves the Decision Summary (and classifier confirms no prior scaffold exists), identify the features to build from the Decision Summary. In most cases this is a single feature → one PRD-writer + one slicer, run sequentially. Multi-feature ideas produce multiple per-feature pipelines (each still two subagents).
 
-**Check for parallel-safe label** (multi-feature case only): If a seed PRD issue was pre-created on GitHub with a `parallel-safe` label, run `gh issue view <N> --json labels` to detect it. If the label is present (or if `--parallel` flag was passed), spawn the per-feature pipelines concurrently. Otherwise, run them sequentially (default). Within a single pipeline, the slicer-scaffolder subagent ALWAYS runs after the PRD-writer subagent returns (the slicer needs `$PRD_ISSUE`).
+**Check for parallel-safe label** (multi-feature case only): If a seed PRD issue was pre-created on GitHub with a `parallel-safe` label, run `gh issue view <N> --json labels` to detect it. If the label is present (or if `--parallel` flag was passed), spawn the per-feature pipelines concurrently. Otherwise, run them sequentially (default). Within a single pipeline, the slicer subagent ALWAYS runs after the PRD-writer subagent returns (the slicer needs `$PRD_ISSUE`).
 
 ### Stage 1: Spawn the PRD-writer subagent
 
@@ -84,12 +88,12 @@ Return [] if write-a-prd found no new terms to formalize.
 
 Wait for the PRD-writer to return. Parse the JSON. Capture `$PRD_ISSUE` and `$NEW_TERMS`.
 
-### Stage 2: Spawn the slicer-scaffolder subagent
+### Stage 2: Spawn the slicer subagent
 
 Use the `Agent` tool. **Model: Sonnet.** Prompt (must be ≤2k chars):
 
 ```
-You are the issue-slicer + GSD-scaffolder for PRD #$PRD_ISSUE.
+You are the issue-slicer for PRD #$PRD_ISSUE.
 
 Your job (run in order, no user input needed):
 1. Read the PRD: gh issue view $PRD_ISSUE --json title,body,labels --jq '{title,body,labels:[.labels[].name]}'
@@ -97,16 +101,15 @@ Your job (run in order, no user input needed):
    - Skip step 1 (you have $PRD_ISSUE)
    - Skip step 4 (quiz) — derive granularity and dependencies from the PRD body alone (prefer thin vertical slices, one per independent file or concern)
    - Run steps 2, 3, 5: optional codebase verification, draft slices, create slice issues in dependency order
-3. Locate issue-to-gsd skill at .claude/skills/issue-to-gsd/SKILL.md — follow it:
-   - Run sequentially for each slice issue (dependency order, blockers first)
-   - Determine the next phase number, generate a branch slug, create the branch, append to ROADMAP.md, update STATE.md, commit
 
-After all slice issues and GSD phases are scaffolded, return:
+Do NOT scaffold GSD phases or create feature branches — that happens lazily inside /gsd-execute when work actually begins. Stop after the slice issues are on GitHub.
 
-{"prd_issue":$PRD_ISSUE,"slice_issues":[<n>,...],"phases":[<n>,...],"branches":["feat/N-slug",...],"summary_md":"≤3k: slice count, phase range, dependency order, any deviations from the PRD's implementation decisions"}
+After all slice issues are created, return:
+
+{"prd_issue":$PRD_ISSUE,"slice_issues":[<n>,...],"summary_md":"≤3k: slice count, dependency order, any deviations from the PRD's implementation decisions"}
 ```
 
-Wait for the slicer-scaffolder to return. Parse the JSON. Merge `prd_issue`, `slice_issues`, `phases`, `branches` from this return with `new_terms` captured in Stage 1 — that is the per-feature pipeline result.
+Wait for the slicer to return. Parse the JSON. Merge `prd_issue`, `slice_issues` from this return with `new_terms` captured in Stage 1 — that is the per-feature pipeline result.
 
 ---
 
@@ -129,18 +132,22 @@ Rationale: glossary drift accumulates if each PRD updates it inline. Batching on
 ## Final summary
 
 ```
-Pipeline complete.
+Planning complete.
 
 PRD:    #$PRD_ISSUE
 Slices: #X, #Y, #Z, ...
-Phases: NN, NN+1, NN+2, ...
 
-Next steps for each phase:
-  /gsd-run-phase <NN>      — plan, execute, review, and ship in one command
-  — or —
-  /gsd:plan-phase <NN>     — plan only
-  /gsd:execute-phase <NN>  — execute only
-  /gsd-ship-phase <NN>     — ship with review gate (use --skip-review for doc-only PRs)
+No GSD phases scaffolded, no branches created — the repo stays clean while
+slices sit on the board. Branches are created lazily by /gsd-execute when
+work actually starts.
+
+Next step — when you're ready to start work:
+  /gsd-execute X Y Z           — scaffolds + plans + executes + ships each
+                                 issue end-to-end (issue numbers accepted directly)
+  — or, one issue at a time —
+  /issue-to-gsd <issue-N>      — manually scaffold one issue (creates branch,
+                                 ROADMAP entry, STATE.md row); then
+  /gsd-run-phase <phase-N>     — plan + execute + review + ship that one phase
 ```
 
 ---
@@ -156,23 +163,24 @@ Next steps for each phase:
 ## Parallel mode
 
 Sequential is the default because:
-1. Parallel pipelines may produce conflicting ROADMAP.md phase numbers
-2. Parallel pipelines may produce conflicting Ubiquitous Language.md edits
-3. Most ideas produce a single PRD — parallelism buys nothing
+1. Parallel pipelines may produce conflicting Ubiquitous Language.md edits
+2. Most ideas produce a single PRD — parallelism buys nothing
 
 Trigger parallel mode only when:
 - User passes `--parallel` explicitly, OR
-- A seed GitHub issue has the `parallel-safe` label (which means a human already confirmed no ROADMAP conflicts)
+- A seed GitHub issue has the `parallel-safe` label (which means a human already confirmed it is safe to run features concurrently)
 
-In parallel mode, spawn all per-feature **PRD-writer** subagents in one message (multiple Agent tool calls — one per feature). Wait for ALL Stage-1 returns. Then spawn all slicer-scaffolder subagents in one message. This staging matters: slicer-scaffolders need their PRD issue numbers from Stage 1, and a feature's slicer must not start before its own PRD is written. Two-stage parallel = two waves of concurrent Agent calls, not one wave of mixed-stage calls.
+In parallel mode, spawn all per-feature **PRD-writer** subagents in one message (multiple Agent tool calls — one per feature). Wait for ALL Stage-1 returns. Then spawn all slicer subagents in one message. This staging matters: slicers need their PRD issue numbers from Stage 1, and a feature's slicer must not start before its own PRD is written. Two-stage parallel = two waves of concurrent Agent calls, not one wave of mixed-stage calls.
+
+(ROADMAP/branch conflicts are no longer a parallel-mode concern because this skill no longer touches ROADMAP.md or creates branches — that's deferred to `/gsd-execute`.)
 
 ## On interruptions
 
 If the user breaks off mid-pipeline ("let's stop here", "I'll handle the rest later"), acknowledge the stopping point and tell them exactly which command to run to resume:
 
 - Stopped after Phase 1 (Decision Summary approved, no PRD-writer spawned yet): "Resume by running `/write-a-prd` with the Decision Summary above"
-- Stopped after PRD-writer returned but before slicer-scaffolder spawned: "Resume with `/prd-to-issues $PRD_ISSUE`" — this picks up at Stage 2 manually
-- Stopped after slicer created slices but before issue-to-gsd ran: "Resume with `/issue-to-gsd <issue-N>` for each open slice in dependency order"
+- Stopped after PRD-writer returned but before slicer spawned: "Resume with `/prd-to-issues $PRD_ISSUE`" — this picks up at Stage 2 manually
+- Stopped after slicer created some but not all slice issues: "Resume by manually creating the remaining slices, or re-run `/prd-to-issues $PRD_ISSUE` and skip the ones already created"
 
 ---
 
@@ -188,8 +196,10 @@ These are excuses you might generate to skip or collapse pipeline phases. Reject
 | "I already know the codebase — I'll skip repo exploration in the PRD-writer." | The Decision Summary is based on what the user said, not what the code does. The PRD-writer's repo exploration catches contradictions before they become bad PRD assumptions. |
 | "The user said continue quickly — I'll skip the gate." | Phase 1 has exactly one gate. Never skip it. |
 | "I'll run the PRD-writer without the full Decision Summary to save prompt space." | The PRD-writer needs the full contract. Trim other prompt sections first. |
-| "I'll merge the PRD-writer and slicer-scaffolder back into one subagent to save an Agent call." | Two-tier model split exists for a reason — the writer runs Opus for high-leverage conceptual work, the slicer runs Sonnet for mechanical decomposition. Re-merging burns Opus tokens on tedious GitHub scaffolding. |
-| "I'll run the slicer-scaffolder on Opus too, just to be safe." | Slicing a PRD into vertical issues is templated work. Sonnet is fine. Reserve Opus for the writer where its judgment actually moves the needle. |
+| "I'll merge the PRD-writer and slicer back into one subagent to save an Agent call." | Two-tier model split exists for a reason — the writer runs Opus for high-leverage conceptual work, the slicer runs Sonnet for mechanical decomposition. Re-merging burns Opus tokens on tedious GitHub scaffolding. |
+| "I'll run the slicer on Opus too, just to be safe." | Slicing a PRD into vertical issues is templated work. Sonnet is fine. Reserve Opus for the writer where its judgment actually moves the needle. |
+| "While I'm here, I'll go ahead and run issue-to-gsd to scaffold the GSD phases too — saves the user a step." | No. The whole point of stopping at slice issues is to keep the repo clean of branches for work that may not start for weeks (or ever). Running issue-to-gsd now defeats the architecture. /gsd-execute calls issue-to-gsd lazily when work begins. |
+| "The user wants to start work right away — I'll scaffold the phases now to save time." | If they want to start now, they should run `/gsd-execute <slice-issues>` next, which scaffolds + executes in one go. Either way the repo only gets a branch for the slice the user is *actually about to work on*. |
 
 ---
 
@@ -199,10 +209,10 @@ Before declaring the pipeline complete, confirm every item:
 
 - [ ] Phase 1: Decision Summary produced and user approved it explicitly (said "continue" or equivalent)
 - [ ] Stage 1 (PRD-writer, Opus): spawned via Agent tool with ≤2k prompt; returned JSON with `prd_issue`, `new_terms`, `summary_md`
-- [ ] Stage 2 (slicer-scaffolder, Sonnet): spawned via Agent tool with ≤2k prompt; returned JSON with `prd_issue`, `slice_issues`, `phases`, `branches`, `summary_md`
+- [ ] Stage 2 (slicer, Sonnet): spawned via Agent tool with ≤2k prompt; returned JSON with `prd_issue`, `slice_issues`, `summary_md`
 - [ ] Glossary batch: `/ubiquitous-language` ran once (if non-architecture new_terms exist), or silently skipped
 - [ ] Glossary batch commit: `docs(glossary): formalize terms from PRDs #X, ...` (or skipped)
-- [ ] Final summary: PRD issue, all slice issue numbers, all phase numbers, exact resume commands
-- [ ] No duplicate ROADMAP.md phase numbers produced (verify if parallel mode was used)
+- [ ] Final summary: PRD issue + slice issue numbers + the `/gsd-execute <slices>` resume command
 - [ ] PRD-writer ran on Opus (not Sonnet/Haiku) — this is the high-leverage conceptual step
-- [ ] Slicer-scaffolder ran on Sonnet (not Opus) — Opus on mechanical scaffolding is wasted budget
+- [ ] Slicer ran on Sonnet (not Opus) — Opus on mechanical decomposition is wasted budget
+- [ ] **No GSD phases scaffolded, no branches created** — the slicer must NOT have invoked issue-to-gsd. Verify `git branch --list 'feat/*'` returned no new branches.

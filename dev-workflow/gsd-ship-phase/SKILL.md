@@ -17,6 +17,16 @@ Two-half ship pipeline that splits the existing `~/.claude/skills/gsd/scripts/sh
 
 ## Process
 
+### Step 0 — Capture feature branch name
+
+Before running anything, capture the current branch:
+
+```bash
+FEATURE_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+```
+
+Store this — you need it in Step 5 to delete the branch after the bash backbone switches to `$BASE`.
+
 ### Step 1 — Preflight + tests (bash backbone)
 
 Invoke the bash script in stage-gate mode:
@@ -140,14 +150,39 @@ Propagate exits:
 | 0 | Shipped successfully |
 | 2 | CI failure on PR — PR is open; fix on the same branch and re-run |
 
-### Step 5 — Done summary
+### Step 5 — Explicit branch cleanup
 
-After step 4 returns 0, print:
+Run this immediately after step 4 exits 0. This is defense-in-depth: `gh pr merge --delete-branch` handles the happy path, but GitHub branch-protection rules, auto-merge timing, or repository settings can silently prevent it. This step guarantees cleanup regardless.
+
+```bash
+# 1. Switch to base if the bash script already did it (idempotent)
+git checkout "$BASE" 2>/dev/null || true
+
+# 2. Delete the remote tracking branch (noop if --delete-branch already removed it)
+git push origin --delete "$FEATURE_BRANCH" 2>/dev/null \
+  && echo "🧹 Remote branch $FEATURE_BRANCH deleted." \
+  || echo "ℹ Remote branch $FEATURE_BRANCH already gone."
+
+# 3. Prune stale remote-tracking refs so local git is in sync
+git fetch --prune origin
+
+# 4. Delete the local branch (-D forces deletion even if not fully merged according to git)
+git branch -D "$FEATURE_BRANCH" 2>/dev/null \
+  && echo "🧹 Local branch $FEATURE_BRANCH deleted." \
+  || echo "ℹ Local branch $FEATURE_BRANCH already gone."
+```
+
+A stale branch is never a reason to mark the ship as failed. If deletion fails, log a warning and continue.
+
+### Step 6 — Done summary
+
+After step 4 returns 0 and step 5 cleanup completes, print:
 
 ```
 ✅ Phase <NN> shipped.
    PR:        <URL>
    Closed:    #<issue> #<issue>
+   Branch:    <FEATURE_BRANCH> deleted (local + remote)
    REVIEW.md: <commit SHA> (committed in step 2)
 ```
 

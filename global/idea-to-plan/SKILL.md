@@ -1,11 +1,13 @@
 ---
 name: idea-to-plan
-description: Full pipeline from raw idea to actionable GSD plan with GitHub tracking. Triggers when the user says "idea-to-plan", "/idea-to-plan", "let's kick off a new feature", "I have an idea I want to build out", "take me through the full planning pipeline", or wants to go from idea → PRD → issues → GSD phases in one session. This skill chains grill-me → write-a-prd → prd-to-issues → issue-to-gsd. Only Phase 1 (grill-me Decision Summary) has a user gate — Phases 2, 3, and 4 run automatically after approval.
+description: Full pipeline from raw idea to a board of grabbable GitHub slice issues. Triggers when the user says "idea-to-plan", "/idea-to-plan", "let's kick off a new feature", "I have an idea I want to build out", "take me through the full planning pipeline", or wants to go from idea → PRD → grabbable GitHub issues in one session. This skill chains grill-me → write-a-prd → prd-to-issues. Only Phase 1 (grill-me Decision Summary) has a user gate — Phases 2 and 3 run automatically after approval. Stops at slice issues on purpose: GSD phase scaffolding and branch creation happen later, lazily, when /gsd-execute starts work on them — keeps the repo clean of branches for slices that may sit on the board for weeks.
 ---
 
 # idea-to-plan — Full Feature Planning Pipeline
 
-You are orchestrating a four-phase pipeline that takes a raw idea all the way to GSD-ready execution phases. **Only Phase 1 has a hard gate** — once the user approves the Decision Summary, run Phases 2, 3, and 4 automatically without pausing for confirmation.
+You are orchestrating a three-phase pipeline that takes a raw idea all the way to a board of grabbable GitHub slice issues. **Only Phase 1 has a hard gate** — once the user approves the Decision Summary, run Phases 2 and 3 automatically without pausing for confirmation.
+
+This skill stops at slice issues on purpose. Branches, ROADMAP entries, and STATE.md scaffolding all happen later in `/gsd-execute`'s Step 0, when work actually begins. That keeps the repo clean of branches for work that may sit on the board for days, weeks, or never start at all.
 
 ## Phase overview
 
@@ -13,7 +15,9 @@ You are orchestrating a four-phase pipeline that takes a raw idea all the way to
 Phase 1: grill-me       → Decision Summary
 Phase 2: write-a-prd    → PRD GitHub issue
 Phase 3: prd-to-issues  → Vertical slice GitHub issues
-Phase 4: issue-to-gsd   → GSD phases + feature branches
+
+→ Hand off to /gsd-execute <issue-N> <issue-M> ... when ready to start work.
+  (gsd-execute scaffolds GSD phases + branches lazily via issue-to-gsd.)
 ```
 
 ---
@@ -71,30 +75,27 @@ Run steps 2, 3, and 5:
 
 ---
 
-## Phase 4 — GSD scaffold (issue-to-gsd)
+## Final summary
 
-**Locate the issue-to-gsd skill** at `.claude/skills/issue-to-gsd/SKILL.md` within the project.
-
-Run issue-to-gsd **sequentially** for each issue in `$SLICE_ISSUES`, in dependency order (blockers first). For each issue:
-
-1. Follow the full issue-to-gsd protocol (fetch issue, check blockers, determine phase number, create branch, append ROADMAP.md, update STATE.md, commit)
-2. **No per-issue confirmation** — scaffold all issues automatically without pausing.
-3. The issue-to-gsd protocol automatically determines a **Testing Strategy** for each phase by reading the project's CLAUDE.md and inspecting which files the issue touches. The strategy is written into each ROADMAP.md phase entry. When the strategy is None, the reason is recorded so it is explicit and reviewable, not silent.
-
-After all issues are processed, print a final summary:
+After Phase 3 finishes, print:
 
 ```
-Pipeline complete.
+Planning complete.
 
 PRD:    #$PRD_ISSUE
 Slices: #X, #Y, #Z, ...
-Phases: NN, NN+1, NN+2, ...
 
-Next steps for each phase:
-  /gsd:plan-phase <NN>
-  /gsd:execute-phase <NN>
-  /gsd-review            # fresh-context reviewer before opening the PR
-  gh pr create ...
+No GSD phases scaffolded, no branches created — the repo stays clean while
+slices sit on the board. Branches are created lazily by /gsd-execute when
+work actually starts.
+
+Next step — when you're ready to start work:
+  /gsd-execute X Y Z           — scaffolds + plans + executes + ships each
+                                 issue end-to-end (issue numbers accepted directly)
+  — or, one issue at a time —
+  /issue-to-gsd <issue-N>      — manually scaffold one issue (creates branch,
+                                 ROADMAP entry, STATE.md row); then
+  /gsd-run-phase <phase-N>     — plan + execute + review + ship that one phase
 ```
 
 ---
@@ -102,9 +103,8 @@ Next steps for each phase:
 ## Data passing rules
 
 - Carry the Decision Summary verbatim into Phase 2 — do not paraphrase
-- Carry `$PRD_ISSUE` from Phase 2 into Phase 3 and Phase 4
-- Carry `$SLICE_ISSUES` from Phase 3 into Phase 4
-- If the user makes changes during any gate (rewording, removing scope, etc.) — update your carried data before proceeding
+- Carry `$PRD_ISSUE` from Phase 2 into Phase 3
+- If the user makes changes during the Phase 1 gate (rewording, removing scope, etc.) — update the Decision Summary before proceeding
 
 ## On interruptions
 
@@ -112,7 +112,7 @@ If the user breaks off mid-pipeline ("let's stop here", "I'll handle the rest la
 
 - Stopped after Phase 1: "Resume by running `/write-a-prd` with the Decision Summary above"
 - Stopped after Phase 2: "Resume by running `/prd-to-issues $PRD_ISSUE`"
-- Stopped after Phase 3: "Resume by running `/issue-to-gsd <issue-N>` for each open slice"
+- Stopped after Phase 3 (some slices created, others not): "Resume by manually creating the remaining slice issues, or by re-running `/prd-to-issues $PRD_ISSUE` and skipping the ones already on the board"
 
 ---
 
@@ -127,7 +127,8 @@ These are excuses you might generate to skip or collapse pipeline phases. Reject
 | "I'll combine multiple concerns into one slice issue to keep the list short." | Thin vertical slices exist so each issue maps to a reviewable PR. Fat issues produce fat PRs. Preserve granularity. |
 | "I already know the codebase well enough — I'll skip the repo exploration in Phase 2." | The Decision Summary is based on what the user said, not on what the code actually does. Exploration catches contradictions before they become bad PRD assumptions. |
 | "The user said continue quickly — I'll auto-approve and skip the gate." | Phase 1 has exactly one gate for a reason. The Decision Summary is the only point where the user can correct the direction before hours of downstream work are scaffolded. Never skip it. |
-| "Phases 3 and 4 are mechanical — I'll run them in parallel or out of order." | Phase 4 depends on issue numbers from Phase 3. Phase 3 depends on the PRD issue from Phase 2. Dependency order is not optional. |
+| "Phase 3 is mechanical — I'll run it before Phase 2 finishes." | Phase 3 depends on the PRD issue from Phase 2. Dependency order is not optional. |
+| "While I'm here, I'll go ahead and run issue-to-gsd to scaffold the GSD phases too — saves the user a step." | No. The whole point of stopping at slice issues is to keep the repo clean of branches for work that may not start for weeks (or ever). Running issue-to-gsd here defeats the architecture. /gsd-execute calls issue-to-gsd lazily when work begins. |
 
 ---
 
@@ -139,8 +140,5 @@ Before declaring the pipeline complete, confirm every item:
 - [ ] Phase 2: PRD GitHub issue created — URL printed, `$PRD_ISSUE` recorded
 - [ ] Phase 3: All slice issues created in dependency order (blockers first) — issue numbers recorded as `$SLICE_ISSUES`
 - [ ] Phase 3: Each slice issue references `$PRD_ISSUE` as its parent
-- [ ] Phase 4: One feature branch created per slice issue — branch names follow project convention
-- [ ] Phase 4: ROADMAP.md updated with a phase entry for each issue, including Testing Strategy field (None must be explicit with reason, not silent)
-- [ ] Phase 4: STATE.md updated to reflect next executable phase
-- [ ] Phase 4: All scaffold commits pushed or staged — no orphaned local-only branches
-- [ ] Final summary printed with PRD issue, all slice issue numbers, all phase numbers, and exact resume commands
+- [ ] Final summary printed with PRD issue + slice issue numbers + the `/gsd-execute <slices>` resume command
+- [ ] **No GSD phases scaffolded, no branches created** — verify `git branch --list 'feat/*'` shows no new branches and `git status` is clean
