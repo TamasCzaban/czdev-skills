@@ -155,6 +155,20 @@ Propagate exits:
 Run this immediately after step 4 exits 0. This is defense-in-depth: `gh pr merge --delete-branch` handles the happy path, but GitHub branch-protection rules, auto-merge timing, or repository settings can silently prevent it. This step guarantees cleanup regardless.
 
 ```bash
+# 0. Defense-in-depth: refuse to delete protected branches even if $FEATURE_BRANCH
+#    somehow equals one. The bash backbone's preflight (ship-phase.sh:94-97) is the
+#    primary guard and would normally have exited 3 long before reaching Step 5,
+#    but a future refactor could remove that guard — so re-check here. Without
+#    this loop, the unconditional `git push origin --delete "$FEATURE_BRANCH"`
+#    below would force-delete dev/uat/main if ever invoked from one of them.
+for protected in main master dev uat; do
+  if [[ "$FEATURE_BRANCH" == "$protected" ]]; then
+    echo "🛑 Refusing to delete protected branch '$FEATURE_BRANCH' — skipping cleanup."
+    echo "   This indicates the bash preflight was bypassed; investigate before retrying."
+    return 0 2>/dev/null || exit 0
+  fi
+done
+
 # 1. Switch to base if the bash script already did it (idempotent)
 git checkout "$BASE" 2>/dev/null || true
 
